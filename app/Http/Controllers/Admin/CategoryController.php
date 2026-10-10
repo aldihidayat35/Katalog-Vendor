@@ -53,6 +53,8 @@ class CategoryController extends Controller
 
         Category::create($data);
 
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+
         return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori baru berhasil ditambahkan.');
     }
@@ -83,6 +85,8 @@ class CategoryController extends Controller
 
         $category->update($data);
 
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+
         return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil diperbarui.');
     }
@@ -103,6 +107,8 @@ class CategoryController extends Controller
         }
 
         $category->delete();
+
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil dihapus.');

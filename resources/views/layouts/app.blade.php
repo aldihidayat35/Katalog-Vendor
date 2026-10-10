@@ -5,8 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? setting('site_name', 'Katalog Undangan') }} - {{ setting('site_tagline', 'Spesialis Undangan Pernikahan') }}</title>
-    <meta name="description" content="Katalog undangan pernikahan cetak dan digital premium terinspirasi Galeria Invitation.">
+    @php
+        $siteName = setting('site_name', 'Galeria Invitation');
+        $siteTagline = setting('site_tagline', 'Spesialis Undangan Pernikahan');
+        $pageTitle = isset($title) && !empty($title) ? "{$title} - {$siteName}" : "{$siteName} - {$siteTagline}";
+        $pageDesc = $description ?? $siteTagline;
+        $pageUrl = url()->current();
+        $pageImage = $ogImage ?? asset('images/placeholder-product.svg');
+    @endphp
+
+    <title>{{ $pageTitle }}</title>
+    <meta name="description" content="{{ $pageDesc }}">
+    <link rel="canonical" href="{{ $pageUrl }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{{ $ogType ?? 'website' }}">
+    <meta property="og:url" content="{{ $pageUrl }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDesc }}">
+    <meta property="og:image" content="{{ $pageImage }}">
+    <meta property="og:site_name" content="{{ $siteName }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $pageUrl }}">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    <meta name="twitter:description" content="{{ $pageDesc }}">
+    <meta name="twitter:image" content="{{ $pageImage }}">
 
     <!-- Fonts: Playfair Display & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -290,7 +315,7 @@
         $defaultConsultationMsg = setting('consultation_message', 'Halo Admin, saya ingin konsultasi mengenai undangan pernikahan.');
         $waUrl = wa_link($defaultConsultationMsg);
     @endphp
-    <div class="fixed bottom-6 right-6 z-50 group">
+    <div class="fixed bottom-6 right-6 z-50 group {{ request()->routeIs('product.show') ? 'hidden sm:block' : '' }}">
         <!-- Floating Label on Hover -->
         <div class="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-charcoal-900 text-white text-xs font-medium py-1.5 px-3 rounded-full shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none hidden sm:block">
             Konsultasi WhatsApp Admin

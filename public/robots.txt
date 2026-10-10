@@ -1,2 +1,9 @@
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /keranjang
+Disallow: /pesanan-saya
+Disallow: /profile
+Disallow: /profil
+
+Sitemap: /sitemap.xml

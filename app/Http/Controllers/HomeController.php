@@ -14,30 +14,26 @@ class HomeController extends Controller
      */
     public function index(): View
     {
-        $banners = Banner::active()->orderBy('sort_order')->get();
+        $data = \Illuminate\Support\Facades\Cache::remember('homepage_data', 3600, function () {
+            return [
+                'banners' => Banner::active()->orderBy('sort_order')->get(),
+                'categories' => Category::active()
+                    ->withCount(['products' => fn ($q) => $q->active()])
+                    ->get(),
+                'latestProducts' => Product::active()
+                    ->with(['category', 'images'])
+                    ->latest('id')
+                    ->take(4)
+                    ->get(),
+                'featuredProducts' => Product::active()
+                    ->featured()
+                    ->with(['category', 'images'])
+                    ->latest('id')
+                    ->take(4)
+                    ->get(),
+            ];
+        });
 
-        $categories = Category::active()
-            ->withCount(['products' => fn ($q) => $q->active()])
-            ->get();
-
-        $latestProducts = Product::active()
-            ->with(['category', 'images'])
-            ->latest('id')
-            ->take(4)
-            ->get();
-
-        $featuredProducts = Product::active()
-            ->featured()
-            ->with(['category', 'images'])
-            ->latest('id')
-            ->take(4)
-            ->get();
-
-        return view('home', compact(
-            'banners',
-            'categories',
-            'latestProducts',
-            'featuredProducts'
-        ));
+        return view('home', $data);
     }
 }

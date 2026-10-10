@@ -91,6 +91,8 @@ class ProductController extends Controller
             }
         });
 
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil ditambahkan.');
     }
@@ -142,6 +144,8 @@ class ProductController extends Controller
             }
         });
 
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil diperbarui.');
     }
@@ -152,6 +156,8 @@ class ProductController extends Controller
     public function destroy(Product $product): RedirectResponse
     {
         $product->delete();
+
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil dihapus (soft delete).');

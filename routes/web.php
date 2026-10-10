@@ -33,6 +33,24 @@ Route::get('/how-to-order', fn () => redirect()->route('how-to-order'));
 Route::get('/kontak', fn () => view('pages.contact'))->name('contact');
 Route::get('/contact', fn () => redirect()->route('contact'));
 
+// XML Sitemap SEO
+Route::get('/sitemap.xml', function () {
+    $products = \App\Models\Product::active()
+        ->whereHas('category', fn ($q) => $q->where('is_active', true))
+        ->select(['slug', 'updated_at'])
+        ->get();
+
+    $categories = \App\Models\Category::active()
+        ->select(['slug', 'updated_at'])
+        ->get();
+
+    $content = view('sitemap', compact('products', 'categories'))->render();
+
+    return response($content, 200, [
+        'Content-Type' => 'application/xml; charset=UTF-8',
+    ]);
+})->name('sitemap');
+
 // Helper route for guest add-to-cart prompt
 Route::get('/keranjang/masuk', function (Request $request) {
     session()->put('url.intended', $request->query('redirect', route('home')));
@@ -49,10 +67,10 @@ Route::middleware('auth')->group(function () {
     // Keranjang Belanja
     Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
     Route::get('/cart', fn () => redirect()->route('cart.index'))->name('cart');
-    Route::post('/keranjang', [CartController::class, 'store'])->name('cart.store');
-    Route::patch('/keranjang/{cart}', [CartController::class, 'update'])->name('cart.update');
+    Route::post('/keranjang', [CartController::class, 'store'])->middleware('throttle:30,1')->name('cart.store');
+    Route::patch('/keranjang/{cart}', [CartController::class, 'update'])->middleware('throttle:30,1')->name('cart.update');
     Route::delete('/keranjang/{cart}', [CartController::class, 'destroy'])->name('cart.destroy');
-    Route::post('/keranjang/promo', [CartController::class, 'applyPromo'])->name('cart.promo.apply');
+    Route::post('/keranjang/promo', [CartController::class, 'applyPromo'])->middleware('throttle:15,1')->name('cart.promo.apply');
     Route::delete('/keranjang/promo', [CartController::class, 'removePromo'])->name('cart.promo.remove');
 
     // Checkout

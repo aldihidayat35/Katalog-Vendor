@@ -27,9 +27,15 @@
                                     Galeria Invitation
                                 </span>
                                 
-                                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight">
-                                    {{ $banner->title }}
-                                </h1>
+                                @if($loop->first)
+                                    <h1 class="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight">
+                                        {{ $banner->title }}
+                                    </h1>
+                                @else
+                                    <h2 class="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight">
+                                        {{ $banner->title }}
+                                    </h2>
+                                @endif
                                 
                                 @if($banner->subtitle)
                                     <p class="text-base sm:text-lg text-stone-300 leading-relaxed max-w-xl">

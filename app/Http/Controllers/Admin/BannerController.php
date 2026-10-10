@@ -51,6 +51,8 @@ class BannerController extends Controller
 
         Banner::create($data);
 
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner promosi berhasil ditambahkan.');
     }
@@ -81,6 +83,8 @@ class BannerController extends Controller
 
         $banner->update($data);
 
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner promosi berhasil diperbarui.');
     }
@@ -95,6 +99,8 @@ class BannerController extends Controller
         }
 
         $banner->delete();
+
+        \Illuminate\Support\Facades\Cache::forget('homepage_data');
 
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner promosi berhasil dihapus.');

@@ -40,6 +40,7 @@
         action="{{ route('checkout.store') }}"
         method="POST"
         x-data="{
+            isSubmitting: false,
             paymentOption: '{{ old('payment_option', $paymentOption) }}',
             subtotal: {{ $summary['subtotal'] }},
             dpSubtotal: {{ $summary['dp_subtotal'] }},
@@ -54,6 +55,7 @@
                 return 'Rp ' + (new Intl.NumberFormat('id-ID').format(num));
             }
         }"
+        @submit="isSubmitting = true"
     >
         @csrf
 
@@ -347,10 +349,16 @@
                         <div class="pt-3">
                             <button
                                 type="submit"
-                                class="w-full py-4 px-6 rounded-full bg-champagne hover:bg-champagne-600 text-white font-semibold text-sm shadow-goldglow flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
+                                :disabled="isSubmitting"
+                                :class="isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-champagne-600 active:scale-95'"
+                                class="w-full py-4 px-6 rounded-full bg-champagne text-white font-semibold text-sm shadow-goldglow flex items-center justify-center gap-2 transition-all duration-200"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                                <span>Kirim Pesanan &amp; Lanjutkan ke WhatsApp</span>
+                                <svg x-show="isSubmitting" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <svg x-show="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                <span x-text="isSubmitting ? 'Memproses Pesanan...' : 'Kirim Pesanan & Lanjutkan ke WhatsApp'">Kirim Pesanan &amp; Lanjutkan ke WhatsApp</span>
                             </button>
                         </div>
 
