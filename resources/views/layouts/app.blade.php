@@ -60,20 +60,20 @@
 
                 <!-- Actions: Cart & Auth -->
                 <div class="flex items-center gap-4">
-                    <!-- Cart Button -->
-                    @php
-                        $cartCount = auth()->check() ? auth()->user()->carts()->sum('quantity') : 0;
-                    @endphp
-                    <a href="{{ url('/cart') }}" class="relative p-2.5 rounded-full text-charcoal-700 hover:text-champagne-600 hover:bg-champagne-50 transition-colors" title="Keranjang Belanja">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                        </svg>
-                        @if($cartCount > 0)
-                            <span class="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center text-[11px] font-bold text-white bg-champagne-600 rounded-full shadow-sm animate-pulse">
-                                {{ $cartCount }}
-                            </span>
-                        @endif
-                    </a>
+                    <!-- Cart Button with Alpine Event Sync -->
+                    <div x-data="{ count: {{ (int) ($cartCount ?? (auth()->check() ? auth()->user()->carts()->sum('quantity') : 0)) }} }"
+                         @cart-updated.window="count = $event.detail.count">
+                        <a href="{{ route('cart.index') }}" class="relative p-2.5 rounded-full text-charcoal-700 hover:text-champagne-600 hover:bg-champagne-50 transition-colors block" title="Keranjang Belanja">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            </svg>
+                            <span
+                                x-show="count > 0"
+                                x-text="count"
+                                class="absolute top-1 right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-white bg-champagne-600 rounded-full shadow-sm animate-pulse"
+                            ></span>
+                        </a>
+                    </div>
 
                     <!-- User Account / Login -->
                     @auth
@@ -108,6 +108,11 @@
                                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-charcoal-700 hover:bg-stone-50">
                                     <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                     Dashboard Member
+                                </a>
+
+                                <a href="{{ route('order.index') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-charcoal-700 hover:bg-stone-50">
+                                    <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                    Pesanan Saya
                                 </a>
 
                                 <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-charcoal-700 hover:bg-stone-50">
@@ -194,7 +199,10 @@
 
     <!-- 3. PAGE CONTENT -->
     <main class="flex-grow">
-        {{ $slot }}
+        @if(isset($slot) && !empty((string)$slot))
+            {{ $slot }}
+        @endif
+        @yield('content')
     </main>
 
     <!-- 4. LUXURY FOOTER -->

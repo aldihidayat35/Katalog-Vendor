@@ -1,15 +1,19 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderHistoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes - Publik
+| Public Routes
 |--------------------------------------------------------------------------
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -29,40 +33,61 @@ Route::get('/how-to-order', fn () => redirect()->route('how-to-order'));
 Route::get('/kontak', fn () => view('pages.contact'))->name('contact');
 Route::get('/contact', fn () => redirect()->route('contact'));
 
-// Placeholder Keranjang & Checkout untuk Fase 3
-Route::get('/keranjang', function () {
-    return redirect()->route('catalog.index')->with('info', 'Sistem Keranjang & Checkout akan diaktifkan penuh pada Fase 3.');
-})->name('cart');
-Route::get('/cart', fn () => redirect()->route('cart'));
-
-Route::post('/keranjang', function () {
-    return redirect()->route('cart')->with('info', 'Produk berhasil dipilih! Alur keranjang & checkout lengkap akan diaktifkan pada Fase 3.');
-});
+// Helper route for guest add-to-cart prompt
+Route::get('/keranjang/masuk', function (Request $request) {
+    session()->put('url.intended', $request->query('redirect', route('home')));
+    session()->flash('info', 'Silakan login untuk menambahkan ke keranjang');
+    return redirect()->route('login');
+})->name('cart.login-prompt');
 
 /*
 |--------------------------------------------------------------------------
-| Member Dashboard & Profile
+| Member Routes (Middleware: auth)
 |--------------------------------------------------------------------------
 */
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
+    // Keranjang Belanja
+    Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
+    Route::get('/cart', fn () => redirect()->route('cart.index'))->name('cart');
+    Route::post('/keranjang', [CartController::class, 'store'])->name('cart.store');
+    Route::patch('/keranjang/{cart}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/keranjang/{cart}', [CartController::class, 'destroy'])->name('cart.destroy');
+    Route::post('/keranjang/promo', [CartController::class, 'applyPromo'])->name('cart.promo.apply');
+    Route::delete('/keranjang/promo', [CartController::class, 'removePromo'])->name('cart.promo.remove');
+
+    // Checkout
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
+    Route::get('/checkout/sukses/{order_number}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+    // Riwayat Pesanan
+    Route::get('/pesanan-saya', [OrderHistoryController::class, 'index'])->name('order.index');
+    Route::get('/pesanan-saya/{order}', [OrderHistoryController::class, 'show'])->name('order.show');
+
+    // Profil Member
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit.id');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update.id');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::put('/profil/password', [ProfileController::class, 'updatePassword']);
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::delete('/profil', [ProfileController::class, 'destroy'])->name('profile.destroy.id');
+
+    // Dashboard
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Admin Panel (Terlindungi Middleware 'admin')
+| Admin Panel (Middleware: auth, admin)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    // Kerangka route kosong fase 1 & 2 (akan diimplementasikan di Fase 4)
     Route::get('/products', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Produk akan diaktifkan pada Fase 4.'));
     Route::get('/categories', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Kategori akan diaktifkan pada Fase 4.'));
     Route::get('/promos', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Promo akan diaktifkan pada Fase 4.'));

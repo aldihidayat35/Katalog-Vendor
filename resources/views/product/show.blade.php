@@ -56,6 +56,53 @@
             openLightbox(src) {
                 this.lightboxImage = src;
                 this.lightboxOpen = true;
+            },
+            isSubmitting: false,
+            toastOpen: false,
+            toastMessage: '',
+            showToast(msg) {
+                this.toastMessage = msg;
+                this.toastOpen = true;
+                setTimeout(() => { this.toastOpen = false; }, 3500);
+            },
+            addToCart() {
+                @guest
+                    window.location.href = "{{ route('cart.login-prompt', ['redirect' => url()->current()]) }}";
+                    return;
+                @endguest
+
+                this.isSubmitting = true;
+                fetch("{{ route('cart.store') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        product_id: {{ $product->id }},
+                        quantity: this.qty
+                    })
+                })
+                .then(async response => {
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        this.showToast(data.message || 'Produk berhasil ditambahkan ke keranjang!');
+                        window.dispatchEvent(new CustomEvent('cart-updated', {
+                            detail: { count: data.cart_count }
+                        }));
+                    } else {
+                        alert(data.message || 'Gagal menambahkan produk ke keranjang.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Terjadi kesalahan saat menambahkan produk ke keranjang.');
+                })
+                .finally(() => {
+                    this.isSubmitting = false;
+                });
             }
         }"
     >
@@ -282,16 +329,21 @@
 
                         <!-- Action Buttons Row -->
                         <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
-                            <!-- Tambah ke Keranjang Button -->
+                            <!-- Tambah ke Keranjang Button with AJAX/Alpine -->
                             <button
-                                type="submit"
-                                :disabled="{{ $product->stock_status === 'out_of_stock' ? 'true' : 'false' }}"
+                                type="button"
+                                @click="addToCart()"
+                                :disabled="isSubmitting || {{ $product->stock_status === 'out_of_stock' ? 'true' : 'false' }}"
                                 class="w-full sm:flex-1 py-3.5 px-6 rounded-full font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm {{ $product->stock_status === 'out_of_stock' ? 'bg-stone-300 text-stone-500 cursor-not-allowed' : 'bg-champagne hover:bg-champagne-600 active:bg-champagne-700 text-white shadow-goldglow' }}"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg x-show="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
-                                <span>{{ $product->stock_status === 'out_of_stock' ? 'Stok Tidak Tersedia' : 'Tambahkan ke Keranjang' }}</span>
+                                <svg x-show="isSubmitting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="isSubmitting ? 'Menambahkan...' : '{{ $product->stock_status === 'out_of_stock' ? 'Stok Tidak Tersedia' : 'Tambahkan ke Keranjang' }}'"></span>
                             </button>
 
                             <!-- Chat Admin Button (Direct WA with Product Name & URL) -->
@@ -430,20 +482,38 @@
                     </svg>
                 </a>
 
-                <form action="{{ url('/keranjang') }}" method="POST" class="inline-block">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                    <input type="hidden" name="quantity" :value="qty">
-                    <input type="hidden" name="payment_option" :value="paymentOption">
-                    <button
-                        type="submit"
-                        :disabled="{{ $product->stock_status === 'out_of_stock' ? 'true' : 'false' }}"
-                        class="px-5 py-2.5 rounded-full text-xs font-bold {{ $product->stock_status === 'out_of_stock' ? 'bg-stone-300 text-stone-500' : 'bg-champagne text-white shadow-goldglow' }}"
-                    >
-                        {{ $product->stock_status === 'out_of_stock' ? 'Habis' : '+ Keranjang' }}
-                    </button>
-                </form>
+                <button
+                    type="button"
+                    @click="addToCart()"
+                    :disabled="isSubmitting || {{ $product->stock_status === 'out_of_stock' ? 'true' : 'false' }}"
+                    class="px-5 py-2.5 rounded-full text-xs font-bold transition-all {{ $product->stock_status === 'out_of_stock' ? 'bg-stone-300 text-stone-500' : 'bg-champagne text-white shadow-goldglow' }}"
+                >
+                    <span x-text="isSubmitting ? '...' : '{{ $product->stock_status === 'out_of_stock' ? 'Habis' : '+ Keranjang' }}'"></span>
+                </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Floating Success Toast Notification (Alpine) -->
+    <div
+        x-show="toastOpen"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+        class="fixed bottom-6 right-6 z-50 bg-charcoal-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-champagne-400/40"
+        style="display: none;"
+    >
+        <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <div class="text-xs">
+            <p class="font-bold text-white" x-text="toastMessage"></p>
+            <a href="{{ route('cart.index') }}" class="text-champagne-300 hover:text-champagne-200 font-semibold underline mt-0.5 inline-block">
+                Buka Keranjang Belanja &rarr;
+            </a>
         </div>
     </div>
 

@@ -101,6 +101,27 @@ class Product extends Model
     }
 
     /**
+     * Accessor: dp_price
+     */
+    public function getDpPriceAttribute(): int
+    {
+        if (isset($this->attributes['dp_price']) && $this->attributes['dp_price'] > 0) {
+            return (int) $this->attributes['dp_price'];
+        }
+
+        $dpPercentage = (float) setting('dp_percentage', 50);
+        return (int) round(($this->final_price * $dpPercentage) / 100);
+    }
+
+    /**
+     * Accessor: dp_amount (alias for dp_price)
+     */
+    public function getDpAmountAttribute(): int
+    {
+        return $this->dp_price;
+    }
+
+    /**
      * Accessor: primary_image_url
      */
     public function getPrimaryImageUrlAttribute(): string
