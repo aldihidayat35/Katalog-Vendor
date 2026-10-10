@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+        @apply bg-ivory text-charcoal font-sans selection:bg-champagne-200 selection:text-charcoal-900;
+    }
+    h1, h2, h3, h4, .font-serif-heading {
+        @apply font-serif tracking-tight text-charcoal-900;
+    }
+}
+
+@layer utilities {
+    .text-gold-gradient {
+        background: linear-gradient(135deg, #B8956A 0%, #DFBD78 50%, #9E7B52 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .bg-gold-gradient {
+        background: linear-gradient(135deg, #B8956A 0%, #C9A97E 100%);
+    }
+}
