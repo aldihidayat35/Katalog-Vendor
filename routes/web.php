@@ -80,21 +80,4 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Admin Panel (Middleware: auth, admin)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-    Route::get('/products', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Produk akan diaktifkan pada Fase 4.'));
-    Route::get('/categories', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Kategori akan diaktifkan pada Fase 4.'));
-    Route::get('/promos', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Promo akan diaktifkan pada Fase 4.'));
-    Route::get('/banners', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Banner akan diaktifkan pada Fase 4.'));
-    Route::get('/orders', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Pesanan akan diaktifkan pada Fase 4.'));
-    Route::get('/members', fn () => redirect()->route('admin.dashboard')->with('info', 'Manajemen Member akan diaktifkan pada Fase 4.'));
-    Route::get('/settings', fn () => redirect()->route('admin.dashboard')->with('info', 'Pengaturan akan diaktifkan pada Fase 4.'));
-});
-
 require __DIR__.'/auth.php';

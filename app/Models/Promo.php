@@ -90,4 +90,45 @@ class Promo extends Model
 
         return min((int) $this->discount_amount, $amount);
     }
+
+    /**
+     * Get promo computed status string for badges.
+     * Options: 'inactive', 'pending', 'expired', 'exhausted', 'active'
+     */
+    public function getComputedStatusAttribute(): string
+    {
+        if (! $this->is_active) {
+            return 'inactive';
+        }
+
+        $now = Carbon::now();
+        if ($now->lt($this->start_date)) {
+            return 'pending';
+        }
+
+        if ($now->gt($this->end_date)) {
+            return 'expired';
+        }
+
+        if ($this->usage_limit !== null && $this->used_count >= $this->usage_limit) {
+            return 'exhausted';
+        }
+
+        return 'active';
+    }
+
+    /**
+     * Get Indonesian label for computed status.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->computed_status) {
+            'inactive' => 'Nonaktif',
+            'pending' => 'Belum Mulai',
+            'expired' => 'Kedaluwarsa',
+            'exhausted' => 'Kuota Habis',
+            'active' => 'Aktif',
+            default => 'Tidak Diketahui',
+        };
+    }
 }

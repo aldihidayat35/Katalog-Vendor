@@ -30,6 +30,7 @@ class Order extends Model
         'notes',
         'status',
         'whatsapp_message',
+        'admin_notes',
     ];
 
     protected function casts(): array
