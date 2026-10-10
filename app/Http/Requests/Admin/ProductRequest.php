@@ -38,6 +38,7 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('products', 'slug')->ignore($productId)],
             'type' => ['required', 'in:printed,digital'],
+            'theme_color' => ['nullable', 'string', Rule::in(array_keys(\App\Models\Product::THEME_COLORS))],
             'short_description' => ['nullable', 'string'],
             'description' => ['required', 'string'],
             'specifications' => ['nullable', 'string'],

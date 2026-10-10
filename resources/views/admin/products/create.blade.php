@@ -128,6 +128,31 @@
                         <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <!-- Theme Color Selector -->
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+                        Tema Warna Utama
+                        <span class="text-stone-400 font-normal lowercase">(opsional &mdash; filter katalog)</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+                        <label class="relative flex items-center gap-2.5 p-2 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-50 transition-all has-[:checked]:border-champagne-500 has-[:checked]:bg-champagne-50/50 has-[:checked]:ring-1 has-[:checked]:ring-champagne-500">
+                            <input type="radio" name="theme_color" value="" @checked(empty(old('theme_color'))) class="text-champagne-600 focus:ring-champagne-500">
+                            <span class="w-4 h-4 rounded-full border border-stone-300 bg-stone-100 flex-shrink-0"></span>
+                            <span class="text-xs text-stone-600 truncate">Tanpa Warna</span>
+                        </label>
+                        @foreach (\App\Models\Product::THEME_COLORS as $key => $color)
+                            <label class="relative flex items-center gap-2.5 p-2 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-50 transition-all has-[:checked]:border-champagne-500 has-[:checked]:bg-champagne-50/50 has-[:checked]:ring-1 has-[:checked]:ring-champagne-500">
+                                <input type="radio" name="theme_color" value="{{ $key }}" @checked(old('theme_color') === $key) class="text-champagne-600 focus:ring-champagne-500">
+                                <span class="w-4 h-4 rounded-full border border-black/10 flex-shrink-0 shadow-xs" style="background-color: {{ $color['hex'] }};"></span>
+                                <span class="text-xs font-medium text-charcoal-800 truncate" title="{{ $color['name'] }}">{{ $color['name'] }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('theme_color')
+                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             <!-- Short description -->

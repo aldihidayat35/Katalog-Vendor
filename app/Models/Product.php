@@ -13,6 +13,69 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const THEME_COLORS = [
+        'gold' => [
+            'name' => 'Gold',
+            'label' => 'Gold Luxury',
+            'hex' => '#D4AF37',
+        ],
+        'sage' => [
+            'name' => 'Sage Green',
+            'label' => 'Sage Green Natural',
+            'hex' => '#8A9A86',
+        ],
+        'rose-gold' => [
+            'name' => 'Rose Gold',
+            'label' => 'Rose Gold Romantis',
+            'hex' => '#B76E79',
+        ],
+        'emerald' => [
+            'name' => 'Emerald Green',
+            'label' => 'Hijau Zamrud Mewah',
+            'hex' => '#1B4D3E',
+        ],
+        'burgundy' => [
+            'name' => 'Burgundy / Maroon',
+            'label' => 'Maroon Elegan',
+            'hex' => '#800020',
+        ],
+        'navy' => [
+            'name' => 'Royal Navy',
+            'label' => 'Biru Navy Abadi',
+            'hex' => '#1B263B',
+        ],
+        'terracotta' => [
+            'name' => 'Terracotta',
+            'label' => 'Terracotta Earthy',
+            'hex' => '#E2725B',
+        ],
+        'champagne' => [
+            'name' => 'Champagne',
+            'label' => 'Champagne Glamour',
+            'hex' => '#C5A880',
+        ],
+        'dusty-blue' => [
+            'name' => 'Dusty Blue',
+            'label' => 'Dusty Blue Pastel',
+            'hex' => '#7A899C',
+        ],
+        'lilac' => [
+            'name' => 'Lilac / Lavender',
+            'label' => 'Ungu Lilac Lembut',
+            'hex' => '#B59EC9',
+        ],
+        'monochrome' => [
+            'name' => 'Hitam / Monokrom',
+            'label' => 'Hitam Modern',
+            'hex' => '#2B2B2B',
+        ],
+        'white' => [
+            'name' => 'Putih / Pearl',
+            'label' => 'Putih Mutiara',
+            'hex' => '#F4F4F4',
+        ],
+    ];
+
     protected $fillable = [
         'category_id',
         'name',
@@ -21,6 +84,7 @@ class Product extends Model
         'description',
         'specifications',
         'type',
+        'theme_color',
         'price',
         'discount_price',
         'dp_price',
@@ -135,6 +199,38 @@ class Product extends Model
         return asset('images/placeholder-product.svg');
     }
 
+    /**
+     * Accessor: theme_color_data
+     */
+    public function getThemeColorDataAttribute(): ?array
+    {
+        if (empty($this->theme_color)) {
+            return null;
+        }
+
+        return self::THEME_COLORS[$this->theme_color] ?? [
+            'name' => ucfirst($this->theme_color),
+            'label' => ucfirst($this->theme_color),
+            'hex' => '#C5A880',
+        ];
+    }
+
+    /**
+     * Accessor: theme_color_label
+     */
+    public function getThemeColorLabelAttribute(): ?string
+    {
+        return $this->theme_color_data['name'] ?? null;
+    }
+
+    /**
+     * Accessor: theme_color_hex
+     */
+    public function getThemeColorHexAttribute(): ?string
+    {
+        return $this->theme_color_data['hex'] ?? null;
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -163,6 +259,10 @@ class Product extends Model
 
         $query->when($filters['tipe'] ?? $filters['type'] ?? null, function ($query, $type) {
             $query->where('type', $type);
+        });
+
+        $query->when($filters['warna'] ?? $filters['color'] ?? null, function ($query, $color) {
+            $query->where('theme_color', $color);
         });
 
         $sort = $filters['sort'] ?? 'terbaru';

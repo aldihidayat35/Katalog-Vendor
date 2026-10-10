@@ -59,13 +59,21 @@ $isPreorder = $product->stock_status === 'preorder';
     <!-- Product Info Section -->
     <div class="p-5 flex-1 flex flex-col justify-between">
         <div>
-            <!-- Category Tag -->
+            <!-- Category Tag & Color Dot -->
             <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-champagne-700">
-                    {{ $product->category->name ?? 'Koleksi' }}
-                </span>
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-champagne-700 truncate">
+                        {{ $product->category->name ?? 'Koleksi' }}
+                    </span>
+                    @if($product->theme_color && $product->theme_color_data)
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-stone-100/90 text-stone-600 text-[10px] font-medium border border-stone-200/60 shrink-0" title="Tema: {{ $product->theme_color_label }}">
+                            <span class="w-2 h-2 rounded-full border border-black/10 shrink-0" style="background-color: {{ $product->theme_color_hex }};"></span>
+                            <span class="hidden sm:inline">{{ $product->theme_color_label }}</span>
+                        </span>
+                    @endif
+                </div>
                 @if($product->min_order > 1)
-                    <span class="text-[10px] text-stone-400 font-medium">
+                    <span class="text-[10px] text-stone-400 font-medium shrink-0">
                         Min. {{ $product->min_order }} pcs
                     </span>
                 @endif

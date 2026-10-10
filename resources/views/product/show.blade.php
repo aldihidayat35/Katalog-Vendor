@@ -181,6 +181,13 @@
                             <x-badge color="sage">Cetak Fisik</x-badge>
                         @endif
 
+                        @if($product->theme_color && $product->theme_color_data)
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-stone-100 text-charcoal-800 border border-stone-200/80 shadow-2xs" title="Tema Warna: {{ $product->theme_color_label }}">
+                                <span class="w-2.5 h-2.5 rounded-full border border-black/15 shrink-0" style="background-color: {{ $product->theme_color_hex }};"></span>
+                                <span>Tema {{ $product->theme_color_label }}</span>
+                            </span>
+                        @endif
+
                         @if($product->stock_status === 'ready')
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>

@@ -21,7 +21,10 @@ class CatalogController extends Controller
         $selectedCategory = $request->input('kategori', $request->input('category'));
         $searchQuery = $request->input('q');
         $selectedType = $request->input('tipe', $request->input('type'));
+        $selectedColor = $request->input('warna', $request->input('color'));
         $selectedSort = $request->input('sort', 'terbaru');
+
+        $themeColors = Product::THEME_COLORS;
 
         $products = Product::active()
             ->with(['category', 'images'])
@@ -29,6 +32,7 @@ class CatalogController extends Controller
                 'q' => $searchQuery,
                 'kategori' => $selectedCategory,
                 'tipe' => $selectedType,
+                'warna' => $selectedColor,
                 'sort' => $selectedSort,
             ])
             ->paginate(12)
@@ -37,9 +41,11 @@ class CatalogController extends Controller
         return view('catalog.index', compact(
             'categories',
             'products',
+            'themeColors',
             'selectedCategory',
             'searchQuery',
             'selectedType',
+            'selectedColor',
             'selectedSort'
         ));
     }

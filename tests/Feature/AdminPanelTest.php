@@ -341,4 +341,34 @@ class AdminPanelTest extends TestCase
         $waLink = wa_link('Test Pesan');
         $this->assertStringContainsString('https://wa.me/6287712345678', $waLink);
     }
+
+    /**
+     * Test admin can create product with theme color.
+     */
+    public function test_admin_can_create_product_with_theme_color(): void
+    {
+        $category = Category::factory()->create();
+
+        $data = [
+            'category_id' => $category->id,
+            'name' => 'Emerald Velvet Suite',
+            'slug' => 'emerald-velvet-suite',
+            'type' => 'printed',
+            'theme_color' => 'emerald',
+            'description' => 'Deskripsi produk',
+            'specifications' => 'Bahan Velvet tebal 260 gsm',
+            'price' => 20000,
+            'dp_price' => 10000,
+            'min_order' => 50,
+            'stock_status' => 'ready',
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('admin.products.store'), $data);
+        $response->assertRedirect(route('admin.products.index'));
+
+        $this->assertDatabaseHas('products', [
+            'slug' => 'emerald-velvet-suite',
+            'theme_color' => 'emerald',
+        ]);
+    }
 }

@@ -185,4 +185,38 @@ class CatalogTest extends TestCase
         $responseContact->assertStatus(200);
         $responseContact->assertSee('Hubungi Galeria Invitation');
     }
+
+    /**
+     * Test catalog filtering by theme color.
+     */
+    public function test_catalog_can_filter_by_theme_color(): void
+    {
+        $category = Category::factory()->create();
+
+        $goldProduct = Product::factory()->create([
+            'category_id' => $category->id,
+            'name' => 'Undangan Emas Keraton',
+            'theme_color' => 'gold',
+            'is_active' => true,
+        ]);
+
+        $sageProduct = Product::factory()->create([
+            'category_id' => $category->id,
+            'name' => 'Undangan Hijau Sage Alam',
+            'theme_color' => 'sage',
+            'is_active' => true,
+        ]);
+
+        // Filter gold
+        $responseGold = $this->get('/katalog?warna=gold');
+        $responseGold->assertStatus(200);
+        $responseGold->assertSee('Undangan Emas Keraton');
+        $responseGold->assertDontSee('Undangan Hijau Sage Alam');
+
+        // Filter sage
+        $responseSage = $this->get('/katalog?warna=sage');
+        $responseSage->assertStatus(200);
+        $responseSage->assertSee('Undangan Hijau Sage Alam');
+        $responseSage->assertDontSee('Undangan Emas Keraton');
+    }
 }

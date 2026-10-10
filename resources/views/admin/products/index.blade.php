@@ -114,9 +114,17 @@
                 <!-- Category & Type -->
                 <td class="px-6 py-4">
                     <span class="font-medium text-charcoal-900 block">{{ $product->category->name ?? '-' }}</span>
-                    <span class="text-xs text-stone-500 uppercase tracking-wider">
-                        {{ $product->type === 'printed' ? 'Cetak Fisik' : 'Undangan Digital' }}
-                    </span>
+                    <div class="flex items-center flex-wrap gap-1.5 mt-1">
+                        <span class="text-xs text-stone-500 uppercase tracking-wider">
+                            {{ $product->type === 'printed' ? 'Cetak Fisik' : 'Undangan Digital' }}
+                        </span>
+                        @if ($product->theme_color && $product->theme_color_data)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-stone-100 text-stone-700 border border-stone-200/80" title="Tema Warna: {{ $product->theme_color_label }}">
+                                <span class="w-2 h-2 rounded-full border border-black/10 shrink-0" style="background-color: {{ $product->theme_color_hex }};"></span>
+                                <span>{{ $product->theme_color_label }}</span>
+                            </span>
+                        @endif
+                    </div>
                 </td>
 
                 <!-- Price & DP -->

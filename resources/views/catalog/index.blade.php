@@ -113,14 +113,57 @@
                         </a>
                     </div>
 
-                    <!-- Reset Filters Button if any active -->
-                    @if($selectedCategory || $searchQuery || $selectedType || $selectedSort !== 'terbaru')
+                <!-- Theme Color Swatches Filter -->
+                <div class="pt-3 border-t border-stone-100">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="text-xs font-bold text-stone-500 uppercase tracking-wider">Tema Warna:</span>
+                        @if($selectedColor)
+                            <a
+                                href="{{ route('catalog.index', array_merge(request()->except(['warna', 'color', 'page']))) }}"
+                                class="text-[11px] font-semibold text-stone-400 hover:text-rose-600 transition-colors"
+                            >
+                                Hapus Filter Warna &times;
+                            </a>
+                        @endif
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                        <a
+                            href="{{ route('catalog.index', array_merge(request()->except(['warna', 'color', 'page']))) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all {{ empty($selectedColor) ? 'bg-champagne text-white shadow-sm font-semibold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200' }}"
+                        >
+                            <span class="w-2.5 h-2.5 rounded-full border border-stone-300 bg-stone-300"></span>
+                            <span>Semua Warna</span>
+                        </a>
+
+                        @foreach($themeColors as $key => $color)
+                            @php
+                                $isActive = $selectedColor === $key;
+                            @endphp
+                            <a
+                                href="{{ route('catalog.index', array_merge(request()->except(['page']), ['warna' => $key])) }}"
+                                class="group/color inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-all duration-200 {{ $isActive ? 'bg-charcoal text-white font-semibold shadow-sm ring-2 ring-champagne-400' : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200/80 hover:border-stone-300' }}"
+                                title="Filter tema: {{ $color['name'] }}"
+                            >
+                                <span
+                                    class="w-3.5 h-3.5 rounded-full border border-black/15 shadow-2xs shrink-0 transition-transform group-hover/color:scale-110 {{ $isActive ? 'ring-1 ring-white' : '' }}"
+                                    style="background-color: {{ $color['hex'] }};"
+                                ></span>
+                                <span class="text-xs">{{ $color['name'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Reset Filters Button if any active -->
+                @if($selectedCategory || $searchQuery || $selectedType || $selectedColor || $selectedSort !== 'terbaru')
+                    <div class="pt-2 border-t border-stone-100 flex justify-end">
                         <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-rose-600 hover:text-rose-700 underline flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             Reset Semua Filter
                         </a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </form>
         </div>
 
