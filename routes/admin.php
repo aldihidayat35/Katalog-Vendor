@@ -3,12 +3,12 @@
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PromoController;
 use App\Http\Controllers\Admin\PromotionPopupController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,10 +47,15 @@ Route::get('/orders/export', [OrderController::class, 'exportCsv'])->name('order
 Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 
-// Members Management
-Route::get('/members', [MemberController::class, 'index'])->name('members.index');
-Route::get('/members/export', [MemberController::class, 'exportCsv'])->name('members.export');
-Route::get('/members/{user}', [MemberController::class, 'show'])->name('members.show');
+// Users Management (Admin & Member)
+Route::get('/users/export', [UserController::class, 'exportCsv'])->name('users.export');
+Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+Route::resource('users', UserController::class);
+
+// Backward compatibility routes for legacy /admin/members
+Route::get('/members', [UserController::class, 'index'])->name('members.index');
+Route::get('/members/export', [UserController::class, 'exportCsv'])->name('members.export');
+Route::get('/members/{user}', [UserController::class, 'show'])->name('members.show');
 
 // Settings Management
 Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
