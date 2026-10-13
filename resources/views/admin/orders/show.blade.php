@@ -64,6 +64,13 @@
                         <span class="font-medium text-charcoal-900">{{ $order->shipping_method }}</span>
                     </div>
 
+                    <div>
+                        <span class="text-xs font-semibold text-stone-500 uppercase tracking-wider block">Ongkos Kirim</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Rp 0 &bull; Free Ongkir Seluruh Riau
+                        </span>
+                    </div>
+
                     <div class="sm:col-span-2">
                         <span class="text-xs font-semibold text-stone-500 uppercase tracking-wider block">Alamat Pengiriman</span>
                         <p class="font-medium text-charcoal-900 mt-0.5 whitespace-pre-line">{{ $order->shipping_address }}</p>
@@ -96,9 +103,16 @@
                                     </div>
                                 @endif
                                 <div>
-                                    <h4 class="font-semibold text-charcoal-900">{{ $item->product_name }}</h4>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h4 class="font-semibold text-charcoal-900">{{ $item->product_name }}</h4>
+                                        @if ($item->isWholesale())
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                                                Harga Grosir
+                                            </span>
+                                        @endif
+                                    </div>
                                     <p class="text-xs text-stone-500 mt-0.5">
-                                        Harga Satuan: {{ rupiah($item->price) }} &bull; DP: {{ rupiah($item->dp_price) }}
+                                        Harga Satuan: {{ rupiah($item->unit_price) }} &bull; DP: {{ rupiah($item->dp_price) }}
                                     </p>
                                 </div>
                             </div>
@@ -116,8 +130,16 @@
                 <!-- Price Breakdown -->
                 <div class="pt-4 border-t border-stone-100 space-y-2 text-sm">
                     <div class="flex justify-between text-stone-600">
-                        <span>Subtotal (Harga Normal / Diskon)</span>
+                        <span>Subtotal Pesanan</span>
                         <span class="font-medium text-charcoal-900">{{ rupiah($order->subtotal) }}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-stone-600">
+                        <span>Ongkos Kirim</span>
+                        <span class="font-semibold text-emerald-700 inline-flex items-center gap-1.5">
+                            <span class="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 font-bold">Free Ongkir Se-Riau</span>
+                            <span>Rp 0</span>
+                        </span>
                     </div>
 
                     @if ($order->discount_total > 0)
@@ -127,8 +149,24 @@
                         </div>
                     @endif
 
+                    @if ($order->is_dp)
+                        <div class="p-3.5 rounded-xl bg-champagne-50 border border-champagne-200/80 space-y-1.5 my-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="font-semibold text-charcoal-900">Uang Muka (DP 50%):</span>
+                                <span class="font-bold text-champagne-800">{{ rupiah($order->dp_amount) }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-stone-600">
+                                <span>Sisa Tagihan Pelunasan:</span>
+                                <span class="font-bold text-rose-700">{{ rupiah($order->remaining_balance) }}</span>
+                            </div>
+                            <p class="text-[11px] text-stone-500 pt-1 leading-snug">
+                                ℹ️ Customer membayar DP 50% saat checkout. Tagihkan sisa pelunasan saat sampel desain selesai disetujui sebelum pengiriman.
+                            </p>
+                        </div>
+                    @endif
+
                     <div class="flex justify-between text-base font-bold text-charcoal-900 pt-2 border-t border-stone-100">
-                        <span>Total Pembayaran ({{ strtoupper($order->payment_option) }})</span>
+                        <span>{{ $order->is_dp ? 'Total Tagihan DP (50%)' : 'Total Pembayaran (Lunas)' }}</span>
                         <span class="text-champagne-700">{{ rupiah($order->total_price) }}</span>
                     </div>
                 </div>
@@ -189,10 +227,10 @@
                         </div>
 
                         <select name="status" required class="w-full text-sm rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500">
-                            <option value="lead" @selected($order->status === 'lead')>Lead Baru (Belum Dihubungi)</option>
-                            <option value="contacted" @selected($order->status === 'contacted')>Sudah Dihubungi (Follow-up)</option>
-                            <option value="confirmed" @selected($order->status === 'confirmed')>Dikonfirmasi (DP/Lunas Diterima)</option>
-                            <option value="completed" @selected($order->status === 'completed')>Selesai (Undangan Dikirim)</option>
+                            <option value="lead" @selected($order->status === 'lead')>Lead Baru (Belum Dihubungi / Menunggu DP)</option>
+                            <option value="contacted" @selected($order->status === 'contacted')>Sudah Dihubungi (Follow-up Desain/Data)</option>
+                            <option value="confirmed" @selected($order->status === 'confirmed')>Dikonfirmasi ({{ $order->is_dp ? 'DP 50% Diterima / Dalam Produksi' : 'Lunas Diterima / Dalam Produksi' }})</option>
+                            <option value="completed" @selected($order->status === 'completed')>Selesai ({{ $order->is_dp ? 'Pelunasan Diterima & Pesanan Dikirim' : 'Undangan Dikirim/Diserahkan' }})</option>
                             <option value="cancelled" @selected($order->status === 'cancelled')>Dibatalkan</option>
                         </select>
                         @error('status')

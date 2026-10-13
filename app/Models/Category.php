@@ -40,7 +40,7 @@ class Category extends Model
     public function getImageUrlAttribute(): string
     {
         if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
+            return asset('storage/'.$this->image_path);
         }
 
         return asset('images/placeholder-product.svg');

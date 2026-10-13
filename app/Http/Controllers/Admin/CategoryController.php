@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -22,7 +23,7 @@ class CategoryController extends Controller
             ->latest('id');
 
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->input('q') . '%');
+            $query->where('name', 'like', '%'.$request->input('q').'%');
         }
 
         $categories = $query->paginate(10)->withQueryString();
@@ -53,7 +54,7 @@ class CategoryController extends Controller
 
         Category::create($data);
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori baru berhasil ditambahkan.');
@@ -85,7 +86,7 @@ class CategoryController extends Controller
 
         $category->update($data);
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil diperbarui.');
@@ -108,7 +109,7 @@ class CategoryController extends Controller
 
         $category->delete();
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Kategori berhasil dihapus.');

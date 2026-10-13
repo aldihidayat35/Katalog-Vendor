@@ -10,8 +10,6 @@ class PromoService
     /**
      * Validate promo code against given subtotal.
      *
-     * @param string $code
-     * @param int $subtotal
      * @return array{valid: bool, promo: ?Promo, discount: int, message: string}
      */
     public function validatePromo(string $code, int $subtotal): array
@@ -54,7 +52,7 @@ class PromoService
                 'valid' => false,
                 'promo' => null,
                 'discount' => 0,
-                'message' => 'Kode promo belum mulai berlaku (mulai ' . $promo->start_date->translatedFormat('d M Y') . ').',
+                'message' => 'Kode promo belum mulai berlaku (mulai '.$promo->start_date->translatedFormat('d M Y').').',
             ];
         }
 
@@ -81,7 +79,7 @@ class PromoService
                 'valid' => false,
                 'promo' => null,
                 'discount' => 0,
-                'message' => 'Minimal belanja untuk kode promo ini adalah ' . rupiah($promo->min_purchase) . '.',
+                'message' => 'Minimal belanja untuk kode promo ini adalah '.rupiah($promo->min_purchase).'.',
             ];
         }
 
@@ -91,7 +89,7 @@ class PromoService
             'valid' => true,
             'promo' => $promo,
             'discount' => $discount,
-            'message' => 'Kode promo ' . $promo->code . ' berhasil diterapkan! Diskon: ' . rupiah($discount) . '.',
+            'message' => 'Kode promo '.$promo->code.' berhasil diterapkan! Diskon: '.rupiah($discount).'.',
         ];
     }
 
@@ -105,6 +103,7 @@ class PromoService
             if ($promo->max_discount !== null && $discount > $promo->max_discount) {
                 return (int) $promo->max_discount;
             }
+
             return $discount;
         }
 

@@ -45,6 +45,9 @@
             subtotal: {{ $summary['subtotal'] }},
             dpSubtotal: {{ $summary['dp_subtotal'] }},
             discount: {{ $summary['discount'] }},
+            get remainingBalance() {
+                return Math.max(0, this.subtotal - this.dpSubtotal);
+            },
             get total() {
                 if (this.paymentOption === 'dp') {
                     return this.dpSubtotal;
@@ -181,11 +184,44 @@
                         </h2>
                     </div>
 
+                    <!-- Banner Info Free Ongkir Provinsi Riau -->
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-50 border border-emerald-200/90 p-4 sm:p-5 shadow-sm">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white tracking-wide uppercase shadow-xs">
+                                        🎉 Free Ongkir Se-Riau
+                                    </span>
+                                    <span class="text-xs font-bold text-emerald-950">
+                                        Gratis Ongkos Kirim Seluruh Provinsi Riau
+                                    </span>
+                                </div>
+                                <p class="text-xs text-emerald-900 leading-relaxed font-normal">
+                                    Kabar gembira! Khusus pengiriman ke seluruh wilayah <strong class="font-semibold text-emerald-950">Provinsi Riau</strong> mendapatkan fasilitas <strong class="font-semibold text-emerald-950">Free Ongkir (Rp 0)</strong> tanpa minimum belanja.
+                                </p>
+                                <div class="mt-2.5 pt-2 border-t border-emerald-200/70 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-emerald-800">
+                                    <span class="font-semibold">Cakupan Wilayah:</span>
+                                    <span>Pekanbaru • Dumai • Kampar • Siak • Pelalawan • Bengkalis • Indragiri Hulu • Indragiri Hilir • Rokan Hulu • Rokan Hilir • Kuantan Singingi • Kepulauan Meranti</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Metode Pengiriman -->
                     <div>
-                        <label for="shipping_method" class="block text-xs font-bold text-charcoal-700 mb-1">
-                            Metode Pengiriman <span class="text-rose-500">*</span>
-                        </label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="shipping_method" class="block text-xs font-bold text-charcoal-700">
+                                Metode Pengiriman <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                Bebas Ongkir (Rp 0)
+                            </span>
+                        </div>
                         <select
                             id="shipping_method"
                             name="shipping_method"
@@ -198,10 +234,14 @@
                                     value="{{ $sm['name'] }}"
                                     {{ old('shipping_method') === $sm['name'] ? 'selected' : '' }}
                                 >
-                                    {{ $sm['name'] }} ({{ $sm['desc'] ?? '' }})
+                                    {{ $sm['name'] }} @if(!empty($sm['desc'])) ({{ $sm['desc'] }}) @endif — Free Ongkir se-Provinsi Riau
                                 </option>
                             @endforeach
                         </select>
+                        <p class="text-[11px] text-emerald-700 mt-1.5 flex items-center gap-1.5 font-medium">
+                            <svg class="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            <span>Semua pilihan ekspedisi di atas <strong>bebas biaya kirim (Free Ongkir Rp 0)</strong> untuk pengiriman di area Provinsi Riau.</span>
+                        </p>
                         @error('shipping_method')
                             <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
                         @enderror
@@ -217,9 +257,12 @@
                             name="shipping_address"
                             rows="3"
                             required
-                            placeholder="Alamat jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota/kabupaten, kode pos"
+                            placeholder="Alamat jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota/kabupaten di Provinsi Riau, kode pos"
                             class="w-full rounded-xl text-sm border-stone-300 focus:border-champagne focus:ring-champagne leading-relaxed"
                         >{{ old('shipping_address', $user->address) }}</textarea>
+                        <p class="text-[11px] text-stone-500 mt-1 flex items-center gap-1">
+                            <span>💡 Cantumkan nama kecamatan &amp; kabupaten/kota di Provinsi Riau untuk memastikan pengiriman Free Ongkir tepat sasaran.</span>
+                        </p>
                         @error('shipping_address')
                             <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
                         @enderror
@@ -275,11 +318,11 @@
                             <input type="radio" name="payment_option" value="dp" :checked="paymentOption === 'dp'" class="mt-1 text-champagne focus:ring-champagne">
                             <div>
                                 <span class="text-xs font-bold text-charcoal-900 block">Uang Muka (DP {{ setting('dp_percentage', 50) }}%)</span>
-                                <span class="text-xs font-semibold text-champagne-700 block mt-0.5">
+                                <span class="text-xs font-bold text-champagne-700 block mt-0.5" x-text="formatRupiah(dpSubtotal)">
                                     {{ rupiah($summary['dp_subtotal']) }}
                                 </span>
                                 <p class="text-[11px] text-stone-500 mt-1">
-                                    Bayar DP untuk memulai desain. Pelunasan saat siap kirim.
+                                    Bayar DP 50% untuk mulai produksi. Sisa <span class="font-semibold text-stone-700" x-text="formatRupiah(remainingBalance)">{{ rupiah(max(0, $summary['subtotal'] - $summary['dp_subtotal'])) }}</span> dilunasi saat pesanan selesai.
                                 </p>
                             </div>
                         </label>
@@ -309,13 +352,27 @@
                                         <h4 class="text-xs font-bold text-charcoal-900 truncate">
                                             {{ $item->product->name }}
                                         </h4>
-                                        <span class="text-[11px] text-stone-500">
-                                            {{ $item->quantity }} pcs × {{ rupiah($item->product->final_price) }}
-                                        </span>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="text-[11px] text-stone-500">
+                                                {{ $item->quantity }} pcs × {{ rupiah($item->unit_price ?? $item->product->final_price) }}
+                                            </span>
+                                            @if(!empty($item->is_wholesale))
+                                                <span class="px-1.5 py-0.2 text-[9px] font-bold bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                                                    Grosir
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
-                                    <span class="text-xs font-serif font-bold text-charcoal-900">
-                                        {{ rupiah($item->subtotal) }}
-                                    </span>
+                                    <div class="text-right">
+                                        <span class="text-xs font-serif font-bold text-charcoal-900 block">
+                                            {{ rupiah($item->subtotal ?? $item->item_subtotal) }}
+                                        </span>
+                                        <template x-if="paymentOption === 'dp'">
+                                            <span class="text-[10px] text-champagne-700 font-semibold block">
+                                                DP: {{ rupiah($item->dp_subtotal ?? ($item->product->dp_price * $item->quantity)) }}
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -323,8 +380,16 @@
                         <!-- Price Breakdown -->
                         <div class="pt-4 border-t border-stone-100 space-y-2.5 text-xs text-stone-600">
                             <div class="flex justify-between">
-                                <span>Subtotal</span>
+                                <span>Subtotal Pesanan</span>
                                 <span class="font-semibold text-charcoal-900">{{ rupiah($summary['subtotal']) }}</span>
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <span>Ongkos Kirim</span>
+                                <span class="text-emerald-700 font-semibold inline-flex items-center gap-1.5">
+                                    <span class="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 font-bold">Free Ongkir Riau</span>
+                                    <span>Rp 0</span>
+                                </span>
                             </div>
 
                             <template x-if="discount > 0 && paymentOption === 'full'">
@@ -334,10 +399,27 @@
                                 </div>
                             </template>
 
+                            <!-- DP Detail Breakdown Box -->
+                            <template x-if="paymentOption === 'dp'">
+                                <div class="p-3.5 rounded-2xl bg-champagne-50/80 border border-champagne-200/90 space-y-2 mt-2">
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="font-medium text-charcoal-800">Tagihan DP 50% (Bayar Sekarang):</span>
+                                        <span class="font-bold text-champagne-800" x-text="formatRupiah(dpSubtotal)">{{ rupiah($summary['dp_subtotal']) }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs text-stone-600">
+                                        <span>Sisa Tagihan Pelunasan:</span>
+                                        <span class="font-semibold text-stone-700" x-text="formatRupiah(remainingBalance)">{{ rupiah(max(0, $summary['subtotal'] - $summary['dp_subtotal'])) }}</span>
+                                    </div>
+                                    <p class="text-[10px] text-stone-500 border-t border-champagne-200/60 pt-2 leading-relaxed">
+                                        ℹ️ Anda hanya membayar nominal DP sekarang. Pelunasan sisa 50% dibayarkan saat pesanan selesai sebelum pengiriman.
+                                    </p>
+                                </div>
+                            </template>
+
                             <div class="flex justify-between items-baseline pt-3 border-t border-stone-200 text-sm">
                                 <div>
-                                    <span class="font-serif font-bold text-base text-charcoal-900 block">Total Pembayaran:</span>
-                                    <span class="text-[10px] text-champagne-700 font-semibold" x-text="paymentOption === 'dp' ? 'Skema Uang Muka (DP)' : 'Skema Full Payment'"></span>
+                                    <span class="font-serif font-bold text-base text-charcoal-900 block" x-text="paymentOption === 'dp' ? 'Total Bayar Sekarang (DP):' : 'Total Pembayaran (Lunas):'">Total Pembayaran:</span>
+                                    <span class="text-[10px] text-champagne-700 font-semibold" x-text="paymentOption === 'dp' ? 'Skema Uang Muka (DP 50%)' : 'Skema Full Payment'"></span>
                                 </div>
                                 <span class="font-serif font-bold text-2xl text-champagne-700" x-text="formatRupiah(total)">
                                     {{ rupiah($summary['total']) }}

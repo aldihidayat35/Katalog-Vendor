@@ -17,6 +17,6 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Galeria');
+        $response->assertSee(setting('site_name', 'Undangin'));
     }
 }

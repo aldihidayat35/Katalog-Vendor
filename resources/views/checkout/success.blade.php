@@ -107,8 +107,16 @@
         <!-- Totals -->
         <div class="pt-2 text-xs space-y-1.5 border-t border-stone-100">
             <div class="flex justify-between text-stone-600">
-                <span>Subtotal</span>
+                <span>Subtotal Pesanan</span>
                 <span>{{ rupiah($order->subtotal) }}</span>
+            </div>
+
+            <div class="flex justify-between items-center text-stone-600">
+                <span>Ongkos Kirim</span>
+                <span class="text-emerald-700 font-semibold inline-flex items-center gap-1.5">
+                    <span class="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 font-bold">Free Ongkir Se-Riau</span>
+                    <span>Rp 0</span>
+                </span>
             </div>
 
             @if($order->discount_total > 0)
@@ -118,11 +126,24 @@
                 </div>
             @endif
 
+            @if($order->is_dp)
+                <div class="p-3 rounded-2xl bg-champagne-50 border border-champagne-200/80 space-y-1.5 my-2">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-charcoal-900">Uang Muka (DP 50%):</span>
+                        <span class="font-bold text-champagne-800">{{ rupiah($order->dp_amount) }}</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-stone-600">
+                        <span>Sisa Pelunasan Nanti:</span>
+                        <span class="font-semibold text-stone-700">{{ rupiah($order->remaining_balance) }}</span>
+                    </div>
+                </div>
+            @endif
+
             <div class="flex justify-between items-baseline pt-2 border-t border-stone-200 text-sm">
                 <div>
-                    <span class="font-bold text-charcoal-900 block">Total Tagihan:</span>
+                    <span class="font-bold text-charcoal-900 block">{{ $order->is_dp ? 'Total Tagihan DP Sekarang:' : 'Total Tagihan:' }}</span>
                     <span class="text-[11px] text-champagne-700 font-medium capitalize">
-                        Skema: {{ $order->payment_option === 'dp' ? 'Uang Muka (DP)' : 'Full Payment' }}
+                        Skema: {{ $order->payment_label }}
                     </span>
                 </div>
                 <span class="font-serif font-bold text-xl text-champagne-700">

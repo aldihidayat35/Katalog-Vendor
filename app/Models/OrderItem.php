@@ -39,4 +39,20 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    /**
+     * Determine if this order item was purchased with wholesale pricing.
+     */
+    public function isWholesale(): bool
+    {
+        if ($this->relationLoaded('product') && $this->product) {
+            return $this->product->isWholesaleForQuantity($this->quantity);
+        }
+
+        if ($this->product_id) {
+            return $this->product?->isWholesaleForQuantity($this->quantity) ?? false;
+        }
+
+        return false;
+    }
 }

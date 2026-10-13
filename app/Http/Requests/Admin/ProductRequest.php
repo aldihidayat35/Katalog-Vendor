@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -38,7 +39,7 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('products', 'slug')->ignore($productId)],
             'type' => ['required', 'in:printed,digital'],
-            'theme_color' => ['nullable', 'string', Rule::in(array_keys(\App\Models\Product::THEME_COLORS))],
+            'theme_color' => ['nullable', 'string', Rule::in(array_keys(Product::THEME_COLORS))],
             'short_description' => ['nullable', 'string'],
             'description' => ['required', 'string'],
             'specifications' => ['nullable', 'string'],
@@ -53,6 +54,10 @@ class ProductRequest extends FormRequest
             'images' => ['nullable', 'array'],
             'images.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'primary_image_index' => ['nullable', 'integer', 'min:0'],
+            'tiers' => ['nullable', 'array'],
+            'tiers.*.min_quantity' => ['nullable', 'integer', 'min:1'],
+            'tiers.*.max_quantity' => ['nullable', 'integer'],
+            'tiers.*.unit_price' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
@@ -70,7 +75,23 @@ class ProductRequest extends FormRequest
             $dpPrice = (int) $this->input('dp_price', 0);
 
             if ($dpPrice > $finalPrice) {
-                $validator->errors()->add('dp_price', 'Harga DP (' . rupiah($dpPrice) . ') tidak boleh melebihi harga final produk (' . rupiah($finalPrice) . ').');
+                $validator->errors()->add('dp_price', 'Harga DP ('.rupiah($dpPrice).') tidak boleh melebihi harga final produk ('.rupiah($finalPrice).').');
+            }
+
+            if ($this->has('tiers') && is_array($this->input('tiers'))) {
+                foreach ($this->input('tiers') as $idx => $tier) {
+                    $min = isset($tier['min_quantity']) && $tier['min_quantity'] !== '' ? (int) $tier['min_quantity'] : null;
+                    $max = isset($tier['max_quantity']) && $tier['max_quantity'] !== '' ? (int) $tier['max_quantity'] : null;
+                    $unitPrice = isset($tier['unit_price']) && $tier['unit_price'] !== '' ? (int) $tier['unit_price'] : null;
+
+                    if ($min !== null && $max !== null && $max < $min) {
+                        $validator->errors()->add("tiers.{$idx}.max_quantity", "Batas maksimal ({$max} pcs) tidak boleh lebih kecil dari batas minimal ({$min} pcs).");
+                    }
+
+                    if ($min !== null && $unitPrice === null) {
+                        $validator->errors()->add("tiers.{$idx}.unit_price", 'Harga satuan per pcs wajib diisi untuk tier ini.');
+                    }
+                }
             }
         });
     }

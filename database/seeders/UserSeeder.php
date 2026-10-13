@@ -18,6 +18,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Administrator Katalog',
+                'username' => 'admin',
                 'password' => Hash::make('password'),
                 'phone' => '081234567890',
                 'instagram' => '@katalog.admin',
@@ -32,6 +33,7 @@ class UserSeeder extends Seeder
             ['email' => 'budi@example.com'],
             [
                 'name' => 'Budi Pratama',
+                'username' => 'budi_pratama',
                 'password' => Hash::make('password'),
                 'phone' => '081298765431',
                 'instagram' => '@budipratama',
@@ -46,6 +48,7 @@ class UserSeeder extends Seeder
             ['email' => 'siti@example.com'],
             [
                 'name' => 'Siti Rahmawati',
+                'username' => 'siti_rahma',
                 'password' => Hash::make('password'),
                 'phone' => '081345678912',
                 'instagram' => '@sitirahma',
@@ -60,6 +63,7 @@ class UserSeeder extends Seeder
             ['email' => 'dimas@example.com'],
             [
                 'name' => 'Dimas Wicaksono',
+                'username' => 'dimas_wicak',
                 'password' => Hash::make('password'),
                 'phone' => '081567890123',
                 'instagram' => '@dimaswicak',

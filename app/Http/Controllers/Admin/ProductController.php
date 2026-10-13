@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -27,7 +28,7 @@ class ProductController extends Controller
 
         // Search by name
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->input('q') . '%');
+            $query->where('name', 'like', '%'.$request->input('q').'%');
         }
 
         // Filter by category
@@ -70,9 +71,22 @@ class ProductController extends Controller
     {
         DB::transaction(function () use ($request) {
             $data = $request->validated();
-            unset($data['images'], $data['primary_image_index']);
+            unset($data['images'], $data['primary_image_index'], $data['tiers']);
 
             $product = Product::create($data);
+
+            // Handle wholesale price tiers
+            if ($request->has('tiers') && is_array($request->input('tiers'))) {
+                foreach ($request->input('tiers') as $tierData) {
+                    if (isset($tierData['min_quantity']) && $tierData['min_quantity'] !== '' && isset($tierData['unit_price']) && $tierData['unit_price'] !== '') {
+                        $product->priceTiers()->create([
+                            'min_quantity' => (int) $tierData['min_quantity'],
+                            'max_quantity' => isset($tierData['max_quantity']) && $tierData['max_quantity'] !== '' ? (int) $tierData['max_quantity'] : null,
+                            'unit_price' => (int) $tierData['unit_price'],
+                        ]);
+                    }
+                }
+            }
 
             // Handle multi image uploads
             if ($request->hasFile('images')) {
@@ -91,7 +105,7 @@ class ProductController extends Controller
             }
         });
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil ditambahkan.');
@@ -102,7 +116,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product): View
     {
-        $product->load(['category', 'images']);
+        $product->load(['category', 'images', 'priceTiers']);
         $categories = Category::orderBy('name')->get();
 
         return view('admin.products.edit', compact('product', 'categories'));
@@ -115,9 +129,23 @@ class ProductController extends Controller
     {
         DB::transaction(function () use ($request, $product) {
             $data = $request->validated();
-            unset($data['images'], $data['primary_image_index']);
+            unset($data['images'], $data['primary_image_index'], $data['tiers']);
 
             $product->update($data);
+
+            // Sync wholesale price tiers
+            $product->priceTiers()->delete();
+            if ($request->has('tiers') && is_array($request->input('tiers'))) {
+                foreach ($request->input('tiers') as $tierData) {
+                    if (isset($tierData['min_quantity']) && $tierData['min_quantity'] !== '' && isset($tierData['unit_price']) && $tierData['unit_price'] !== '') {
+                        $product->priceTiers()->create([
+                            'min_quantity' => (int) $tierData['min_quantity'],
+                            'max_quantity' => isset($tierData['max_quantity']) && $tierData['max_quantity'] !== '' ? (int) $tierData['max_quantity'] : null,
+                            'unit_price' => (int) $tierData['unit_price'],
+                        ]);
+                    }
+                }
+            }
 
             // Handle primary image update from existing images
             if ($request->filled('primary_image_id')) {
@@ -144,7 +172,7 @@ class ProductController extends Controller
             }
         });
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil diperbarui.');
@@ -157,7 +185,7 @@ class ProductController extends Controller
     {
         $product->delete();
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil dihapus (soft delete).');

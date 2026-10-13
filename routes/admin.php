@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PromoController;
+use App\Http\Controllers\Admin\PromotionPopupController;
 use App\Http\Controllers\Admin\SettingController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 // Dashboard
 Route::get('/', [DashboardController::class, 'index'])->name('index');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard/analytics', [DashboardController::class, 'analytics'])->name('dashboard.analytics');
 
 // Products Management
 Route::delete('/products/images/{productImage}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
@@ -34,6 +36,10 @@ Route::resource('promos', PromoController::class);
 
 // Banners Management
 Route::resource('banners', BannerController::class);
+
+// Promotional Popup Management
+Route::get('/popup-promotion', [PromotionPopupController::class, 'index'])->name('popup.index');
+Route::put('/popup-promotion', [PromotionPopupController::class, 'update'])->name('popup.update');
 
 // Orders / Leads Management
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');

@@ -128,6 +128,7 @@ class CartController extends Controller
 
         if ($result['valid']) {
             session(['applied_promo_code' => $result['promo']->code]);
+
             return redirect()->back()->with('success', $result['message']);
         }
 
@@ -140,6 +141,7 @@ class CartController extends Controller
     public function removePromo(): RedirectResponse
     {
         session()->forget('applied_promo_code');
+
         return redirect()->back()->with('info', 'Kode promo berhasil dihapus dari keranjang.');
     }
 }

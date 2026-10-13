@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\BannerRequest;
 use App\Models\Banner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -20,7 +21,7 @@ class BannerController extends Controller
         $query = Banner::orderBy('sort_order')->latest('id');
 
         if ($request->filled('q')) {
-            $query->where('title', 'like', '%' . $request->input('q') . '%');
+            $query->where('title', 'like', '%'.$request->input('q').'%');
         }
 
         $banners = $query->paginate(10)->withQueryString();
@@ -51,7 +52,7 @@ class BannerController extends Controller
 
         Banner::create($data);
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner promosi berhasil ditambahkan.');
@@ -83,7 +84,7 @@ class BannerController extends Controller
 
         $banner->update($data);
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner promosi berhasil diperbarui.');
@@ -100,7 +101,7 @@ class BannerController extends Controller
 
         $banner->delete();
 
-        \Illuminate\Support\Facades\Cache::forget('homepage_data');
+        Cache::forget('homepage_data');
 
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner promosi berhasil dihapus.');

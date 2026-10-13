@@ -4,12 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Promo;
 use App\Models\Setting;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +20,7 @@ class AdminPanelTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $member;
 
     protected function setUp(): void
@@ -55,6 +56,66 @@ class AdminPanelTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin');
         $response->assertStatus(200);
         $response->assertSee('Ringkasan Operasional');
+        $response->assertSee('Tren Pemesanan Bulanan');
+        $response->assertSee('Status Pesanan');
+        $response->assertSee('monthlyTrendChart');
+        $response->assertSee('orderStatusPieChart');
+    }
+
+    public function test_admin_dashboard_provides_analytics_api_endpoint(): void
+    {
+        $year = now()->year;
+
+        Order::factory()->create([
+            'status' => 'lead',
+            'created_at' => Carbon::create($year, 1, 15, 12, 0, 0),
+        ]);
+
+        Order::factory()->create([
+            'status' => 'confirmed',
+            'created_at' => Carbon::create($year, 2, 20, 12, 0, 0),
+        ]);
+
+        $response = $this->actingAs($this->admin)->getJson(route('admin.dashboard.analytics', [
+            'year' => $year,
+            'month' => 'all',
+        ]));
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'year',
+                'month',
+                'monthly_trend' => [
+                    'labels',
+                    'orders',
+                    'revenue',
+                    'total_orders',
+                    'total_revenue',
+                ],
+                'status_breakdown' => [
+                    'labels',
+                    'counts',
+                    'colors',
+                    'total',
+                    'details',
+                ],
+            ]);
+
+        $json = $response->json();
+        $this->assertEquals(2, $json['monthly_trend']['total_orders']);
+        $this->assertEquals(2, $json['status_breakdown']['total']);
+    }
+
+    public function test_admin_product_pagination_renders_html_navigation_without_raw_entities(): void
+    {
+        $category = Category::factory()->create();
+        Product::factory()->count(25)->create(['category_id' => $category->id]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.products.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('<nav role="navigation"', false);
+        $response->assertDontSee('&lt;nav role=&quot;navigation&quot;', false);
     }
 
     /**
@@ -288,11 +349,48 @@ class AdminPanelTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        
+
         $content = $response->streamedContent();
         $this->assertStringContainsString('No. Pesanan', $content);
         $this->assertStringContainsString('INV-20261010-0001', $content);
         $this->assertStringContainsString('Siti Nurhaliza', $content);
+        $this->assertStringContainsString('Total Dibayar/DP', $content);
+        $this->assertStringContainsString('Sisa Pelunasan', $content);
+    }
+
+    public function test_admin_order_detail_displays_item_unit_price_and_dp_breakdown(): void
+    {
+        $order = Order::create([
+            'order_number' => 'INV-20261010-0088',
+            'user_id' => $this->member->id,
+            'customer_name' => 'Maya Pratama',
+            'customer_email' => 'maya@example.com',
+            'customer_phone' => '081234567888',
+            'shipping_address' => 'Jl. Anggrek No. 12',
+            'shipping_method' => 'JNE Reguler',
+            'payment_option' => 'dp',
+            'subtotal' => 1000000,
+            'discount_total' => 0,
+            'total_price' => 500000,
+            'status' => 'confirmed',
+            'whatsapp_message' => 'Halo...',
+        ]);
+
+        $order->items()->create([
+            'product_name' => 'Kirana Botanical Single Card',
+            'unit_price' => 10000,
+            'dp_price' => 5000,
+            'quantity' => 100,
+            'subtotal' => 1000000,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.orders.show', $order));
+
+        $response->assertStatus(200);
+        $response->assertSee('Harga Satuan: Rp 10.000');
+        $response->assertSee('Uang Muka (DP 50%):');
+        $response->assertSee('Rp 500.000');
+        $response->assertSee('Sisa Tagihan Pelunasan:');
     }
 
     /**
@@ -340,6 +438,63 @@ class AdminPanelTest extends TestCase
         // Verify helper wa_link uses the newly updated number
         $waLink = wa_link('Test Pesan');
         $this->assertStringContainsString('https://wa.me/6287712345678', $waLink);
+    }
+
+    /**
+     * Test admin can upload and remove site logo and favicon.
+     */
+    public function test_admin_can_upload_and_remove_site_logo_and_favicon(): void
+    {
+        Storage::fake('public');
+
+        $logo = UploadedFile::fake()->image('brand-logo.png', 200, 200);
+        $favicon = UploadedFile::fake()->image('favicon.png', 32, 32);
+
+        $data = [
+            'whatsapp_number' => '081234567890',
+            'site_name' => 'Undangin Eksklusif',
+            'site_tagline' => 'Katalog Undangan Mewah',
+            'contact_email' => 'halo@undangin.com',
+            'consultation_message' => 'Halo Admin...',
+            'site_logo' => $logo,
+            'site_favicon' => $favicon,
+        ];
+
+        $response = $this->actingAs($this->admin)->put(route('admin.settings.update'), $data);
+        $response->assertRedirect(route('admin.settings.index'));
+
+        $this->assertNotNull(setting('site_logo'));
+        $this->assertNotNull(setting('site_favicon'));
+        Storage::disk('public')->assertExists(setting('site_logo'));
+        Storage::disk('public')->assertExists(setting('site_favicon'));
+
+        $this->assertStringContainsString('storage/'.setting('site_logo'), site_logo_url());
+        $this->assertStringContainsString('storage/'.setting('site_favicon'), site_favicon_url());
+
+        // Now test removal of logo and favicon
+        $storedLogo = setting('site_logo');
+        $storedFavicon = setting('site_favicon');
+
+        $removeData = [
+            'whatsapp_number' => '081234567890',
+            'site_name' => 'Undangin Eksklusif',
+            'site_tagline' => 'Katalog Undangan Mewah',
+            'contact_email' => 'halo@undangin.com',
+            'consultation_message' => 'Halo Admin...',
+            'remove_logo' => 1,
+            'remove_favicon' => 1,
+        ];
+
+        $removeResponse = $this->actingAs($this->admin)->put(route('admin.settings.update'), $removeData);
+        $removeResponse->assertRedirect(route('admin.settings.index'));
+
+        $this->assertNull(setting('site_logo'));
+        $this->assertNull(setting('site_favicon'));
+        Storage::disk('public')->assertMissing($storedLogo);
+        Storage::disk('public')->assertMissing($storedFavicon);
+
+        $this->assertNull(site_logo_url());
+        $this->assertEquals(asset('favicon.ico'), site_favicon_url());
     }
 
     /**

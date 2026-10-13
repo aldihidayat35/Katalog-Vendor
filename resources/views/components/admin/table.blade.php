@@ -22,9 +22,9 @@
     @if ($pagination || isset($footer))
         <div class="px-6 py-4 border-t border-stone-100 bg-stone-50/50">
             @if (isset($footer))
-                {{ $footer }}
+                {!! $footer !!}
             @elseif ($pagination)
-                {{ $pagination }}
+                {!! $pagination !!}
             @endif
         </div>
     @endif

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Promo;
 use App\Models\User;
+use App\Services\CartService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -363,7 +364,77 @@ class CartAndCheckoutTest extends TestCase
         $this->assertEquals(2000000, $order->subtotal); // 100 * 20.000
         $this->assertEquals(1000000, $order->total_price); // 50% DP
         $this->assertEquals('dp', $order->payment_option);
+        $this->assertTrue($order->is_dp);
+        $this->assertEquals(1000000, $order->dp_amount);
+        $this->assertEquals(1000000, $order->remaining_balance);
         $this->assertStringContainsString('Total DP: Rp 1.000.000', $order->whatsapp_message);
+        $this->assertStringContainsString('Sisa Pelunasan: Rp 1.000.000', $order->whatsapp_message);
+    }
+
+    public function test_cart_summary_correctly_calculates_dp_50_and_remaining_balance_when_requested(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'is_active' => true,
+            'stock_status' => 'ready',
+            'min_order' => 100,
+            'price' => 3000,
+            'discount_price' => null,
+            'dp_price' => 1500, // 50%
+        ]);
+
+        Cart::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+        ]);
+
+        $response = $this->actingAs($user)->get('/keranjang?payment_option=dp');
+        $response->assertStatus(200)
+            ->assertSee('Uang Muka (DP 50%)')
+            ->assertSee('Tagihan DP 50% (Bayar Sekarang)')
+            ->assertSee('Sisa Pelunasan Nanti');
+
+        $cartService = app(CartService::class);
+        $summary = $cartService->getSummary($user, 'dp');
+
+        $this->assertEquals(300000, $summary['subtotal']);
+        $this->assertEquals(150000, $summary['dp_subtotal']);
+        $this->assertEquals(150000, $summary['remaining_balance']);
+        $this->assertEquals(150000, $summary['total']);
+    }
+
+    public function test_cart_service_safely_calculates_50_percent_dp_when_product_has_package_dp_price(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'price' => 3000,
+            'discount_price' => 2000,
+            'dp_price' => 150000, // Legacy/package value > unit price
+            'min_order' => 100,
+            'is_active' => true,
+            'stock_status' => 'ready',
+        ]);
+
+        Cart::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+        ]);
+
+        $cartService = app(CartService::class);
+        $summary = $cartService->getSummary($user, 'dp');
+
+        // Total order = 100 * 2000 = 200.000
+        // DP 50% = 100.000 (NOT 150.000 * 100 = 15.000.000!)
+        $this->assertEquals(200000, $summary['subtotal']);
+        $this->assertEquals(100000, $summary['dp_subtotal']);
+        $this->assertEquals(100000, $summary['remaining_balance']);
+        $this->assertEquals(100000, $summary['total']);
     }
 
     public function test_user_cannot_view_another_users_order(): void
@@ -391,5 +462,48 @@ class CartAndCheckoutTest extends TestCase
         $response = $this->actingAs($user)->get("/pesanan-saya/{$order->id}");
         $response->assertStatus(200)
             ->assertSee($order->order_number);
+    }
+
+    public function test_checkout_page_and_whatsapp_message_include_free_ongkir_riau_info(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'is_active' => true,
+            'stock_status' => 'ready',
+            'min_order' => 100,
+            'price' => 5000,
+        ]);
+
+        Cart::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+        ]);
+
+        // 1. Checkout view displays Free Ongkir info & badge
+        $response = $this->actingAs($user)->get('/checkout');
+        $response->assertStatus(200)
+            ->assertSee('Free Ongkir Se-Riau')
+            ->assertSee('Gratis Ongkos Kirim Seluruh Provinsi Riau')
+            ->assertSee('Free Ongkir Riau');
+
+        // 2. Checkout submission includes Free Ongkir line in WhatsApp message
+        $checkoutData = [
+            'customer_name' => 'Ahmad Riau',
+            'customer_email' => 'ahmad@example.com',
+            'customer_phone' => '081299887766',
+            'event_date' => Carbon::now()->addMonths(1)->format('Y-m-d'),
+            'shipping_address' => 'Jl. Sudirman No. 45, Kota Pekanbaru, Riau',
+            'shipping_method' => 'JNE Reguler / YES',
+            'payment_option' => 'full',
+        ];
+
+        $this->actingAs($user)->post('/checkout', $checkoutData);
+        $order = Order::where('customer_email', 'ahmad@example.com')->first();
+
+        $this->assertNotNull($order);
+        $this->assertStringContainsString('Ongkir: Free Ongkir (Seluruh Wilayah Provinsi Riau)', $order->whatsapp_message);
     }
 }

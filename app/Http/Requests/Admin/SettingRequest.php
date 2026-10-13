@@ -27,6 +27,10 @@ class SettingRequest extends FormRequest
             'instagram_url' => ['nullable', 'url', 'max:255'],
             'shipping_methods' => ['nullable', 'array'],
             'consultation_message' => ['required', 'string'],
+            'site_logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'site_favicon' => ['nullable', 'file', 'mimes:ico,png,jpg,jpeg,svg,webp', 'max:1024'],
+            'remove_logo' => ['nullable', 'boolean'],
+            'remove_favicon' => ['nullable', 'boolean'],
         ];
     }
 
@@ -43,6 +47,10 @@ class SettingRequest extends FormRequest
             'contact_email.email' => 'Format email kontak tidak valid.',
             'instagram_url.url' => 'Format tautan Instagram harus berupa URL valid.',
             'consultation_message.required' => 'Template pesan konsultasi wajib diisi.',
+            'site_logo.mimes' => 'Logo harus berformat PNG, JPG, JPEG, SVG, atau WEBP.',
+            'site_logo.max' => 'Ukuran logo maksimal 2MB.',
+            'site_favicon.mimes' => 'Favicon harus berformat ICO, PNG, JPG, JPEG, SVG, atau WEBP.',
+            'site_favicon.max' => 'Ukuran favicon maksimal 1MB.',
         ];
     }
 }

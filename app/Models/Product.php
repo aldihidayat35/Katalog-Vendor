@@ -132,6 +132,90 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function priceTiers(): HasMany
+    {
+        return $this->hasMany(ProductPriceTier::class)->orderBy('min_quantity');
+    }
+
+    /**
+     * Check if product has any wholesale price tiers.
+     */
+    public function hasPriceTiers(): bool
+    {
+        if ($this->relationLoaded('priceTiers')) {
+            return $this->priceTiers->isNotEmpty();
+        }
+
+        return $this->priceTiers()->exists();
+    }
+
+    /**
+     * Get the active tier for a specific quantity.
+     */
+    public function getTierForQuantity(int $quantity): ?ProductPriceTier
+    {
+        $tiers = $this->relationLoaded('priceTiers')
+            ? $this->priceTiers
+            : $this->priceTiers()->get();
+
+        if ($tiers->isEmpty()) {
+            return null;
+        }
+
+        $matched = $tiers->first(fn (ProductPriceTier $tier) => $tier->matchesQuantity($quantity));
+        if ($matched) {
+            return $matched;
+        }
+
+        // If quantity is higher than any max_quantity, resolve to the tier with highest min_quantity
+        $highestTier = $tiers->sortByDesc('min_quantity')->first();
+        if ($highestTier && $quantity >= $highestTier->min_quantity) {
+            return $highestTier;
+        }
+
+        return null;
+    }
+
+    /**
+     * Determine unit price based on quantity (wholesale tier or fallback to final_price).
+     */
+    public function getUnitPriceForQuantity(int $quantity): int
+    {
+        $tier = $this->getTierForQuantity($quantity);
+
+        if ($tier) {
+            return (int) $tier->unit_price;
+        }
+
+        return (int) $this->final_price;
+    }
+
+    /**
+     * Determine DP price based on quantity (50% of wholesale unit price if tiered).
+     */
+    public function getDpPriceForQuantity(int $quantity): int
+    {
+        $tier = $this->getTierForQuantity($quantity);
+
+        if ($tier) {
+            $dpPercentage = (float) setting('dp_percentage', 50);
+
+            return (int) round(($tier->unit_price * $dpPercentage) / 100);
+        }
+
+        return (int) $this->dp_price;
+    }
+
+    /**
+     * Check if a quantity triggers a wholesale discount tier.
+     */
+    public function isWholesaleForQuantity(int $quantity): bool
+    {
+        $tier = $this->getTierForQuantity($quantity);
+
+        return $tier !== null && $tier->unit_price < $this->final_price;
+    }
+
     /**
      * Accessor: final_price
      */
@@ -149,7 +233,7 @@ class Product extends Model
      */
     public function getHasDiscountAttribute(): bool
     {
-        return !is_null($this->discount_price) && $this->discount_price > 0 && $this->discount_price < $this->price;
+        return ! is_null($this->discount_price) && $this->discount_price > 0 && $this->discount_price < $this->price;
     }
 
     /**
@@ -174,6 +258,7 @@ class Product extends Model
         }
 
         $dpPercentage = (float) setting('dp_percentage', 50);
+
         return (int) round(($this->final_price * $dpPercentage) / 100);
     }
 
@@ -193,7 +278,14 @@ class Product extends Model
         $primary = $this->images->firstWhere('is_primary', true) ?? $this->images->first();
 
         if ($primary && $primary->image_path) {
-            return asset('storage/' . $primary->image_path);
+            if (str_starts_with($primary->image_path, 'http') || str_starts_with($primary->image_path, 'data:')) {
+                return $primary->image_path;
+            }
+            if (file_exists(public_path($primary->image_path))) {
+                return asset($primary->image_path);
+            }
+
+            return asset('storage/'.$primary->image_path);
         }
 
         return asset('images/placeholder-product.svg');
@@ -266,6 +358,7 @@ class Product extends Model
         });
 
         $sort = $filters['sort'] ?? 'terbaru';
+
         return match ($sort) {
             'harga_terendah' => $query->orderByRaw('CASE WHEN discount_price > 0 AND discount_price IS NOT NULL THEN discount_price ELSE price END ASC'),
             'harga_tertinggi' => $query->orderByRaw('CASE WHEN discount_price > 0 AND discount_price IS NOT NULL THEN discount_price ELSE price END DESC'),

@@ -60,11 +60,14 @@
                                 <td class="py-4 px-6 text-stone-700">
                                     {{ $order->items_count }} desain undangan
                                 </td>
-                                <td class="py-4 px-6 uppercase font-semibold text-stone-600">
-                                    {{ $order->payment_option === 'dp' ? 'Uang Muka (DP)' : 'Full' }}
+                                <td class="py-4 px-6 text-xs font-semibold {{ $order->is_dp ? 'text-champagne-700' : 'text-stone-600' }}">
+                                    {{ $order->payment_label }}
                                 </td>
                                 <td class="py-4 px-6 font-serif font-bold text-sm text-champagne-700">
                                     {{ rupiah($order->total_price) }}
+                                    @if($order->is_dp && $order->remaining_balance > 0)
+                                        <span class="block text-[10px] font-sans font-normal text-stone-400">Sisa: {{ rupiah($order->remaining_balance) }}</span>
+                                    @endif
                                 </td>
                                 <td class="py-4 px-6">
                                     <span class="inline-block px-2.5 py-0.5 rounded-full font-semibold text-[11px] {{ $order->status_badge_color }}">

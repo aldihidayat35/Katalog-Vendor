@@ -28,83 +28,159 @@
         </div>
     </div>
 
+    <!-- Product Detail Alpine State Definition -->
+    <script>
+        function productDetail() {
+            return {
+                qty: {{ max(1, (int)$product->min_order) }},
+                minQty: {{ max(1, (int)$product->min_order) }},
+                baseUnitPrice: {{ $product->final_price }},
+                baseDpPrice: {{ $product->dp_price }},
+                dpPercentage: {{ (float) setting('dp_percentage', 50) }},
+                tiers: @json($product->priceTiers->sortBy('min_quantity')->values()),
+                paymentOption: 'dp',
+                lightboxOpen: false,
+                lightboxImage: '',
+                activeTab: 'package',
+                isSubmitting: false,
+                toastOpen: false,
+                toastMessage: '',
+
+                get unitPrice() {
+                    if (!this.tiers || this.tiers.length === 0) {
+                        return this.baseUnitPrice;
+                    }
+                    const currentQty = Number(this.qty) || 0;
+                    const matched = this.tiers.find(t => {
+                        const min = Number(t.min_quantity);
+                        const max = t.max_quantity ? Number(t.max_quantity) : null;
+                        return currentQty >= min && (max === null || currentQty <= max);
+                    });
+                    if (matched) {
+                        return Number(matched.unit_price);
+                    }
+                    const sorted = [...this.tiers].sort((a, b) => Number(b.min_quantity) - Number(a.min_quantity));
+                    if (sorted.length > 0 && currentQty >= Number(sorted[0].min_quantity)) {
+                        return Number(sorted[0].unit_price);
+                    }
+                    return this.baseUnitPrice;
+                },
+
+                get dpUnitPrice() {
+                    if (this.isWholesaleActive) {
+                        return Math.round((this.unitPrice * this.dpPercentage) / 100);
+                    }
+                    return this.baseDpPrice;
+                },
+
+                get isWholesaleActive() {
+                    if (!this.tiers || this.tiers.length === 0) return false;
+                    const currentQty = Number(this.qty) || 0;
+                    const matched = this.tiers.find(t => {
+                        const min = Number(t.min_quantity);
+                        const max = t.max_quantity ? Number(t.max_quantity) : null;
+                        return currentQty >= min && (max === null || currentQty <= max);
+                    });
+                    if (matched) {
+                        return Number(matched.unit_price) < this.baseUnitPrice;
+                    }
+                    const sorted = [...this.tiers].sort((a, b) => Number(b.min_quantity) - Number(a.min_quantity));
+                    if (sorted.length > 0 && currentQty >= Number(sorted[0].min_quantity)) {
+                        return Number(sorted[0].unit_price) < this.baseUnitPrice;
+                    }
+                    return false;
+                },
+
+                isTierActive(tier) {
+                    const currentQty = Number(this.qty) || 0;
+                    const min = Number(tier.min_quantity);
+                    const max = tier.max_quantity ? Number(tier.max_quantity) : null;
+                    if (max === null) {
+                        return currentQty >= min;
+                    }
+                    return currentQty >= min && currentQty <= max;
+                },
+
+                selectTier(tier) {
+                    this.qty = Number(tier.min_quantity);
+                },
+
+                increment() {
+                    this.qty += (this.minQty > 1 ? 50 : 1);
+                },
+                decrement() {
+                    if (this.qty > this.minQty) {
+                        this.qty -= (this.minQty > 1 ? 50 : 1);
+                        if (this.qty < this.minQty) this.qty = this.minQty;
+                    }
+                },
+                formatRupiah(num) {
+                    return 'Rp ' + (new Intl.NumberFormat('id-ID').format(num));
+                },
+                openLightbox(src) {
+                    this.lightboxImage = src;
+                    this.lightboxOpen = true;
+                },
+                showToast(msg) {
+                    this.toastMessage = msg;
+                    this.toastOpen = true;
+                    setTimeout(() => { this.toastOpen = false; }, 3500);
+                },
+                addToCart() {
+                    @guest
+                        window.location.href = "{{ route('cart.login-prompt', ['redirect' => url()->current()]) }}";
+                        return;
+                    @endguest
+
+                    this.isSubmitting = true;
+                    fetch("{{ route('cart.store') }}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                        body: JSON.stringify({
+                            product_id: {{ $product->id }},
+                            quantity: this.qty
+                        })
+                    })
+                    .then(async response => {
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || 'Produk berhasil ditambahkan ke keranjang!');
+                            window.dispatchEvent(new CustomEvent('cart-updated', {
+                                detail: { count: data.cart_count }
+                            }));
+                        } else {
+                            alert(data.message || 'Gagal menambahkan produk ke keranjang.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Terjadi kesalahan saat menambahkan produk ke keranjang.');
+                    })
+                    .finally(() => {
+                        this.isSubmitting = false;
+                    });
+                }
+            };
+        }
+        window.productDetail = productDetail;
+        if (window.Alpine) {
+            window.Alpine.data('productDetail', productDetail);
+        } else {
+            document.addEventListener('alpine:init', () => {
+                window.Alpine.data('productDetail', productDetail);
+            });
+        }
+    </script>
+
     <!-- Product Detail Container with Alpine State -->
     <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16"
-        x-data="{
-            qty: {{ max(1, (int)$product->min_order) }},
-            minQty: {{ max(1, (int)$product->min_order) }},
-            unitPrice: {{ $product->final_price }},
-            dpPrice: {{ $product->dp_price }},
-            paymentOption: 'dp',
-            lightboxOpen: false,
-            lightboxImage: '',
-            activeTab: 'package',
-
-            increment() {
-                this.qty += (this.minQty > 1 ? 50 : 1);
-            },
-            decrement() {
-                if (this.qty > this.minQty) {
-                    this.qty -= (this.minQty > 1 ? 50 : 1);
-                    if (this.qty < this.minQty) this.qty = this.minQty;
-                }
-            },
-            formatRupiah(num) {
-                return 'Rp ' + (new Intl.NumberFormat('id-ID').format(num));
-            },
-            openLightbox(src) {
-                this.lightboxImage = src;
-                this.lightboxOpen = true;
-            },
-            isSubmitting: false,
-            toastOpen: false,
-            toastMessage: '',
-            showToast(msg) {
-                this.toastMessage = msg;
-                this.toastOpen = true;
-                setTimeout(() => { this.toastOpen = false; }, 3500);
-            },
-            addToCart() {
-                @guest
-                    window.location.href = "{{ route('cart.login-prompt', ['redirect' => url()->current()]) }}";
-                    return;
-                @endguest
-
-                this.isSubmitting = true;
-                fetch("{{ route('cart.store') }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "X-Requested-With": "XMLHttpRequest"
-                    },
-                    body: JSON.stringify({
-                        product_id: {{ $product->id }},
-                        quantity: this.qty
-                    })
-                })
-                .then(async response => {
-                    const data = await response.json();
-                    if (response.ok && data.success) {
-                        this.showToast(data.message || 'Produk berhasil ditambahkan ke keranjang!');
-                        window.dispatchEvent(new CustomEvent('cart-updated', {
-                            detail: { count: data.cart_count }
-                        }));
-                    } else {
-                        alert(data.message || 'Gagal menambahkan produk ke keranjang.');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Terjadi kesalahan saat menambahkan produk ke keranjang.');
-                })
-                .finally(() => {
-                    this.isSubmitting = false;
-                });
-            }
-        }"
+        x-data="productDetail()"
     >
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
             
@@ -223,21 +299,75 @@
                                 <span class="text-xs text-stone-500 uppercase tracking-wider font-semibold block mb-0.5">
                                     Harga Satuan
                                 </span>
-                                <div class="flex items-baseline gap-3">
-                                    <span class="text-2xl sm:text-3xl font-serif font-bold text-champagne-700">
+                                <div class="flex items-baseline gap-3 flex-wrap">
+                                    <span class="text-2xl sm:text-3xl font-serif font-bold text-champagne-700" x-text="formatRupiah(unitPrice)">
                                         {{ rupiah($product->final_price) }}
                                     </span>
+                                    <span class="text-xs text-stone-500">/ pcs</span>
+
+                                    <template x-if="isWholesaleActive">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold bg-emerald-600 text-white rounded-full shadow-2xs">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                            Harga Grosir Aktif
+                                        </span>
+                                    </template>
+
                                     @if($product->has_discount)
-                                        <span class="text-sm sm:text-base text-stone-400 line-through">
-                                            {{ rupiah($product->price) }}
-                                        </span>
-                                        <span class="px-2 py-0.5 text-xs font-bold bg-rose-600 text-white rounded-full">
-                                            Hemat {{ $product->discount_percentage }}%
-                                        </span>
+                                        <template x-if="!isWholesaleActive">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm sm:text-base text-stone-400 line-through">
+                                                    {{ rupiah($product->price) }}
+                                                </span>
+                                                <span class="px-2 py-0.5 text-xs font-bold bg-rose-600 text-white rounded-full">
+                                                    Hemat {{ $product->discount_percentage }}%
+                                                </span>
+                                            </div>
+                                        </template>
                                     @endif
                                 </div>
                             </div>
                         </div>
+
+                        <!-- TABEL / KARTU HARGA GROSIR BERTAHAP -->
+                        @if($product->hasPriceTiers())
+                            <div class="pt-3 border-t border-champagne-200/80">
+                                <div class="flex items-center justify-between mb-2.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-champagne-600"></span>
+                                        <span class="text-xs font-bold text-charcoal-900 uppercase tracking-wider">
+                                            Daftar Harga Grosir
+                                        </span>
+                                    </div>
+                                    <span class="text-[11px] text-stone-500">
+                                        Klik baris untuk pilih tier
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-{{ min(3, max(2, $product->priceTiers->count())) }} gap-2.5">
+                                    <template x-for="tier in tiers" :key="tier.id">
+                                        <div
+                                            @click="selectTier(tier)"
+                                            :class="isTierActive(tier) ? 'bg-champagne-50/90 border-champagne-500 ring-2 ring-champagne-400/60 shadow-sm' : 'bg-white/90 hover:bg-white border-stone-200 hover:border-champagne-300'"
+                                            class="p-3 rounded-2xl border cursor-pointer transition-all duration-200 relative group"
+                                        >
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-xs font-bold text-charcoal-900" x-text="tier.range_label || (tier.max_quantity ? tier.min_quantity + ' - ' + tier.max_quantity + ' pcs' : '≥ ' + tier.min_quantity + ' pcs')"></span>
+                                                <span
+                                                    x-show="isTierActive(tier)"
+                                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-600 text-white uppercase tracking-wider shadow-2xs"
+                                                >
+                                                    Pilihan Anda
+                                                </span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="font-serif text-sm font-bold text-champagne-700" x-text="formatRupiah(tier.unit_price)"></span>
+                                                <span class="text-[10px] text-stone-500">/ pcs</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        @endif
 
                         <!-- Skema Opsi Pembayaran DP vs Full Payment -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-champagne-200/80">
@@ -248,11 +378,13 @@
                                 class="p-3.5 rounded-2xl border cursor-pointer transition-all duration-200"
                             >
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-charcoal-900">Uang Muka (DP)</span>
-                                    <span class="text-xs font-semibold text-champagne-700">{{ rupiah($product->dp_price) }}</span>
+                                    <span class="text-xs font-bold text-charcoal-900">Uang Muka (DP 50%)</span>
+                                    <span class="text-xs font-semibold text-champagne-700">
+                                        <span x-text="formatRupiah(dpUnitPrice * qty)"></span>
+                                    </span>
                                 </div>
                                 <p class="text-[11px] text-stone-500 mt-1 leading-snug">
-                                    Cukup bayar DP untuk mengunci slot antrian dan memulai pembuatan draft desain.
+                                    <span x-text="formatRupiah(dpUnitPrice)"></span> / pcs. Cukup bayar DP untuk mengunci slot antrian dan memulai pembuatan draft desain.
                                 </p>
                             </div>
 
@@ -499,32 +631,32 @@
                 </button>
             </div>
         </div>
+
+        <!-- Floating Success Toast Notification (Alpine) -->
+        <div
+            x-show="toastOpen"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+            class="fixed bottom-6 right-6 z-50 bg-charcoal-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-champagne-400/40"
+            style="display: none;"
+        >
+            <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div class="text-xs">
+                <p class="font-bold text-white" x-text="toastMessage"></p>
+                <a href="{{ route('cart.index') }}" class="text-champagne-300 hover:text-champagne-200 font-semibold underline mt-0.5 inline-block">
+                    Buka Keranjang Belanja &rarr;
+                </a>
+            </div>
+        </div>
     </div>
 
-    <!-- Floating Success Toast Notification (Alpine) -->
-    <div
-        x-show="toastOpen"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-        class="fixed bottom-6 right-6 z-50 bg-charcoal-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-champagne-400/40"
-        style="display: none;"
-    >
-        <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        </div>
-        <div class="text-xs">
-            <p class="font-bold text-white" x-text="toastMessage"></p>
-            <a href="{{ route('cart.index') }}" class="text-champagne-300 hover:text-champagne-200 font-semibold underline mt-0.5 inline-block">
-                Buka Keranjang Belanja &rarr;
-            </a>
-        </div>
-    </div>
-
-    <!-- Swiper Gallery Initialization Script -->
+    <!-- Scripts for Product Detail & Swiper -->
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {

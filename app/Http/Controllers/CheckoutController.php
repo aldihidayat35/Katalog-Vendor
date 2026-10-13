@@ -29,7 +29,12 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('warning', 'Keranjang belanja Anda masih kosong. Silakan pilih produk terlebih dahulu.');
         }
 
-        $paymentOption = session('checkout_payment_option', 'full');
+        $paymentOption = $request->query('payment_option', session('checkout_payment_option', 'full'));
+        if (! in_array($paymentOption, ['dp', 'full'])) {
+            $paymentOption = 'full';
+        }
+        session(['checkout_payment_option' => $paymentOption]);
+
         $promoCode = session('applied_promo_code');
         $summary = $this->cartService->getSummary($user, $paymentOption, $promoCode);
 
@@ -38,10 +43,10 @@ class CheckoutController extends Controller
 
         if (empty($shippingMethods)) {
             $shippingMethods = [
-                ['id' => 'jne', 'name' => 'JNE Reguler / YES', 'desc' => 'Pengiriman ekspedisi ke seluruh pelosok Indonesia.'],
-                ['id' => 'jnt', 'name' => 'J&T Express', 'desc' => 'Layanan cepat pick-up dan tracking pengiriman akurat.'],
-                ['id' => 'instant', 'name' => 'Gojek / Grab (Instan)', 'desc' => 'Khusus wilayah Jabodetabek saat pesanan selesai.'],
-                ['id' => 'pickup', 'name' => 'Ambil di Tempat (Self-Pickup)', 'desc' => 'Ambil langsung di workshop Galeria Invitation.'],
+                ['id' => 'jne', 'name' => 'JNE Reguler / YES', 'desc' => 'Pengiriman ekspedisi (Free Ongkir seluruh Provinsi Riau).'],
+                ['id' => 'jnt', 'name' => 'J&T Express', 'desc' => 'Layanan cepat pick-up dan tracking (Free Ongkir seluruh Provinsi Riau).'],
+                ['id' => 'instant', 'name' => 'Kurir Lokal / Instan', 'desc' => 'Pengiriman kilat Pekanbaru & sekitarnya (Free Ongkir).'],
+                ['id' => 'pickup', 'name' => 'Ambil di Tempat (Self-Pickup)', 'desc' => 'Ambil langsung di workshop Galeria Invitation (Gratis).'],
             ];
         }
 

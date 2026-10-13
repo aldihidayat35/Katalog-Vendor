@@ -34,7 +34,7 @@ class FormatHelperTest extends TestCase
     public function test_wa_link_generates_correct_url(): void
     {
         $link = wa_link('Halo Admin, mau tanya undangan.', '081234567890');
-        
+
         $this->assertStringStartsWith('https://wa.me/6281234567890?text=', $link);
         $this->assertStringContainsString(urlencode('Halo Admin, mau tanya undangan.'), $link);
     }

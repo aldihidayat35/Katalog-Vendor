@@ -31,8 +31,11 @@ class OrderController extends Controller
 
         $cleanPhone = clean_phone_number($order->customer_phone);
         $siteName = setting('site_name', 'Galeria Invitation');
-        $waGreeting = "Halo Kak {$order->customer_name}, terima kasih telah memesan di {$siteName}. Menindaklanjuti pesanan Anda dengan nomor {$order->order_number}, apakah ada detail desain yang ingin didiskusikan?";
-        $waCustomerUrl = "https://wa.me/{$cleanPhone}?text=" . urlencode($waGreeting);
+        $paymentInfo = $order->is_dp
+            ? 'dengan skema DP 50% ('.rupiah($order->dp_amount).')'
+            : 'dengan skema Full Payment';
+        $waGreeting = "Halo Kak {$order->customer_name}, terima kasih telah memesan di {$siteName}. Menindaklanjuti pesanan Anda dengan nomor {$order->order_number} {$paymentInfo}, apakah ada detail desain yang ingin didiskusikan?";
+        $waCustomerUrl = "https://wa.me/{$cleanPhone}?text=".urlencode($waGreeting);
 
         return view('admin.orders.show', compact('order', 'waCustomerUrl'));
     }
@@ -64,13 +67,13 @@ class OrderController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $query = $this->buildFilteredQuery($request);
-        $filename = 'pesanan-leads-' . date('Ymd-His') . '.csv';
+        $filename = 'pesanan-leads-'.date('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($query) {
             $handle = fopen('php://output', 'w');
-            
+
             // UTF-8 BOM for Microsoft Excel
-            fputs($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF");
 
             // CSV Header
             fputcsv($handle, [
@@ -85,7 +88,8 @@ class OrderController extends Controller
                 'Kode Promo',
                 'Subtotal',
                 'Diskon',
-                'Total',
+                'Total Dibayar/DP',
+                'Sisa Pelunasan',
                 'Status',
                 'Catatan Customer',
                 'Catatan Admin',
@@ -107,6 +111,7 @@ class OrderController extends Controller
                         $order->subtotal,
                         $order->discount_total,
                         $order->total_price,
+                        $order->remaining_balance,
                         $order->status,
                         $order->notes ?? '-',
                         $order->admin_notes ?? '-',

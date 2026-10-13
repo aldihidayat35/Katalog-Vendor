@@ -23,7 +23,7 @@ class CheckoutService
     {
         return DB::transaction(function () use ($user, $data) {
             // 1. Fetch and validate cart items with lock
-            $cartItems = Cart::with(['product' => fn ($q) => $q->with('category')])
+            $cartItems = Cart::with(['product' => fn ($q) => $q->with(['category', 'priceTiers'])])
                 ->where('user_id', $user->id)
                 ->lockForUpdate()
                 ->get();
@@ -59,13 +59,25 @@ class CheckoutService
             // 2. Server-side price & promo recalculation
             $subtotal = 0;
             $dpSubtotal = 0;
+            $dpPercentage = (float) setting('dp_percentage', 50);
+            $itemCalculations = [];
 
             foreach ($cartItems as $item) {
-                $unitPrice = (int) $item->product->final_price;
-                $dpPrice = (int) $item->product->dp_price;
+                $unitPrice = (int) $item->product->getUnitPriceForQuantity($item->quantity);
+                $rawDpPrice = (int) $item->product->getDpPriceForQuantity($item->quantity);
+
+                $unitDp = ($rawDpPrice > 0 && $rawDpPrice <= $unitPrice)
+                    ? $rawDpPrice
+                    : (int) round(($unitPrice * $dpPercentage) / 100);
+
+                $itemCalculations[$item->id] = [
+                    'unit_price' => $unitPrice,
+                    'dp_price' => $unitDp,
+                    'subtotal' => (int) ($unitPrice * $item->quantity),
+                ];
 
                 $subtotal += ($unitPrice * $item->quantity);
-                $dpSubtotal += ($dpPrice * $item->quantity);
+                $dpSubtotal += ($unitDp * $item->quantity);
             }
 
             $paymentOption = in_array($data['payment_option'] ?? 'full', ['dp', 'full'])
@@ -137,18 +149,24 @@ class CheckoutService
 
             // 5. Create Order Items Snapshot
             foreach ($cartItems as $item) {
+                $calc = $itemCalculations[$item->id] ?? [
+                    'unit_price' => (int) $item->product->final_price,
+                    'dp_price' => (int) round(((int) $item->product->final_price * $dpPercentage) / 100),
+                    'subtotal' => (int) ($item->product->final_price * $item->quantity),
+                ];
+
                 $order->items()->create([
                     'product_id' => $item->product_id,
                     'product_name' => $item->product->name,
-                    'unit_price' => (int) $item->product->final_price,
-                    'dp_price' => (int) $item->product->dp_price,
+                    'unit_price' => $calc['unit_price'],
+                    'dp_price' => $calc['dp_price'],
                     'quantity' => $item->quantity,
-                    'subtotal' => (int) ($item->product->final_price * $item->quantity),
+                    'subtotal' => $calc['subtotal'],
                 ]);
             }
 
             // 6. Build WhatsApp message text & save to orders.whatsapp_message
-            $order->load(['items.product.category']);
+            $order->load(['items.product.category', 'items.product.priceTiers']);
             $whatsappMessage = $this->waBuilder->build($order);
             $order->update(['whatsapp_message' => $whatsappMessage]);
 

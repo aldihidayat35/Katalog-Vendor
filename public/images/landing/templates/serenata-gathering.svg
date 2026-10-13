@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 520" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg_SG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8F5FA"/>
+      <stop offset="100%" stop-color="#E8DEEF"/>
+    </linearGradient>
+    <filter id="shadow_SG" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#2B1C36" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="600" height="520" fill="url(#bg_SG)"/>
+
+  <!-- Border Ornament -->
+  <rect x="24" y="24" width="552" height="472" fill="none" stroke="#76528E" stroke-width="1.2" stroke-dasharray="8,6" opacity="0.35" rx="10"/>
+
+  <!-- Main Card -->
+  <g transform="translate(90, 55)" filter="url(#shadow_SG)">
+    <rect width="420" height="410" rx="14" fill="#FFFFFF" stroke="#E8DEEF" stroke-width="1.5"/>
+    <rect x="14" y="14" width="392" height="382" fill="none" stroke="#76528E" stroke-width="1" stroke-dasharray="4,4" opacity="0.45" rx="10"/>
+
+    <!-- Arch Header Motif -->
+    <path d="M 150 14 Q 210 -6 270 14" stroke="#76528E" stroke-width="1.5" fill="none" opacity="0.7"/>
+
+    <!-- Monogram Seal -->
+    <circle cx="210" cy="115" r="38" fill="#F8F5FA" stroke="#76528E" stroke-width="2"/>
+    <circle cx="210" cy="115" r="32" fill="none" stroke="#76528E" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>
+    <text x="210" y="123" font-family="'Playfair Display', Georgia, serif" font-size="22" font-weight="700" fill="#76528E" text-anchor="middle">SG</text>
+
+    <!-- Category Tag -->
+    <rect x="120" y="180" width="180" height="24" rx="12" fill="#F8F5FA" stroke="#76528E" stroke-width="0.8"/>
+    <text x="210" y="196" font-family="'DM Sans', sans-serif" font-size="9" font-weight="700" fill="#76528E" letter-spacing="2" text-anchor="middle">FAMILY GATHERING</text>
+
+    <!-- Template Name -->
+    <text x="210" y="245" font-family="'Playfair Display', Georgia, serif" font-size="28" font-weight="600" fill="#2B1C36" text-anchor="middle">Serenata</text>
+    <text x="210" y="272" font-family="'DM Sans', sans-serif" font-size="12" font-weight="500" fill="#7a7067" text-anchor="middle">Undangan Digital Acara Lainnya</text>
+
+    <!-- Decorative Divider Line -->
+    <path d="M 130 300 L 290 300" stroke="#76528E" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>
+    <circle cx="210" cy="300" r="3" fill="#76528E"/>
+
+    <!-- Live Preview Button Motif -->
+    <rect x="135" y="330" width="150" height="36" rx="18" fill="#76528E"/>
+    <text x="210" y="352" font-family="'DM Sans', sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Preview Template</text>
+  </g>
+</svg>

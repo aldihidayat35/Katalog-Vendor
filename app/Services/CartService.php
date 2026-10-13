@@ -54,6 +54,7 @@ class CartService
             }
 
             $existingItem->update(['quantity' => $newQuantity]);
+
             return $existingItem->load('product');
         }
 
@@ -100,6 +101,7 @@ class CartService
         }
 
         $cart->update(['quantity' => $quantity]);
+
         return $cart->fresh(['product.category', 'product.images']);
     }
 
@@ -123,7 +125,7 @@ class CartService
     public function getItems(User $user): Collection
     {
         return Cart::with([
-            'product' => fn ($q) => $q->with(['category', 'images' => fn ($img) => $img->orderBy('sort_order')]),
+            'product' => fn ($q) => $q->with(['category', 'priceTiers', 'images' => fn ($img) => $img->orderBy('sort_order')]),
         ])
             ->where('user_id', $user->id)
             ->latest('id')
@@ -140,13 +142,28 @@ class CartService
         $subtotal = 0;
         $dpSubtotal = 0;
         $totalItems = 0;
+        $dpPercentage = (float) setting('dp_percentage', 50);
 
         foreach ($items as $item) {
-            $unitPrice = (int) $item->product->final_price;
-            $dpPrice = (int) $item->product->dp_price;
+            $unitPrice = (int) $item->product->getUnitPriceForQuantity($item->quantity);
+            $rawDpPrice = (int) $item->product->getDpPriceForQuantity($item->quantity);
+
+            // Per-unit DP: If product has custom dp_price <= unitPrice, use it.
+            // Otherwise, calculate standard 50% (dp_percentage) of unit price.
+            $unitDp = ($rawDpPrice > 0 && $rawDpPrice <= $unitPrice)
+                ? $rawDpPrice
+                : (int) round(($unitPrice * $dpPercentage) / 100);
+
+            $item->unit_price = $unitPrice;
+            $item->is_wholesale = $item->product->isWholesaleForQuantity($item->quantity);
+            $item->active_tier = $item->product->getTierForQuantity($item->quantity);
+            $item->item_subtotal = $unitPrice * $item->quantity;
+            $item->subtotal = $unitPrice * $item->quantity;
+            $item->unit_dp = $unitDp;
+            $item->dp_subtotal = $unitDp * $item->quantity;
 
             $subtotal += ($unitPrice * $item->quantity);
-            $dpSubtotal += ($dpPrice * $item->quantity);
+            $dpSubtotal += ($unitDp * $item->quantity);
             $totalItems += $item->quantity;
         }
 
@@ -166,12 +183,18 @@ class CartService
             default => max(0, $subtotal - $discount),
         };
 
+        $remainingBalance = match ($paymentOption) {
+            'dp' => max(0, $subtotal - $dpSubtotal),
+            default => 0,
+        };
+
         return [
             'items' => $items,
             'item_count' => $items->count(),
             'total_quantity' => $totalItems,
             'subtotal' => $subtotal,
             'dp_subtotal' => $dpSubtotal,
+            'remaining_balance' => $remainingBalance,
             'discount' => $discount,
             'payment_option' => $paymentOption,
             'total' => $totalPrice,

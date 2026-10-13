@@ -41,13 +41,13 @@ class MemberController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $query = $this->buildFilteredQuery($request);
-        $filename = 'daftar-member-' . date('Ymd-His') . '.csv';
+        $filename = 'daftar-member-'.date('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($query) {
             $handle = fopen('php://output', 'w');
 
             // UTF-8 BOM
-            fputs($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF");
 
             // CSV Header
             fputcsv($handle, [

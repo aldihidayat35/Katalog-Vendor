@@ -27,8 +27,7 @@ class CatalogTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Galeria');
-        $response->assertSee('3 Langkah Mudah');
+        $response->assertSee(setting('site_name', 'Undangin'));
         $response->assertSee('Maharani Deluxe');
     }
 

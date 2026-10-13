@@ -18,52 +18,61 @@ class WhatsAppMessageBuilder
             : '-';
 
         $instagram = ! empty($order->instagram_account)
-            ? '@' . ltrim($order->instagram_account, '@')
+            ? '@'.ltrim($order->instagram_account, '@')
             : '-';
 
         $paymentLabel = $order->payment_option === 'dp' ? 'DP' : 'Full Payment';
 
         $lines = [];
         $lines[] = "Halo Admin {$siteName}, saya ingin memesan undangan 🙏";
-        $lines[] = "";
+        $lines[] = '';
         $lines[] = "*No. Pesanan:* {$order->order_number}";
-        $lines[] = "";
-        $lines[] = "*DATA PEMESAN*";
+        $lines[] = '';
+        $lines[] = '*DATA PEMESAN*';
         $lines[] = "Nama: {$order->customer_name}";
         $lines[] = "Email: {$order->customer_email}";
         $lines[] = "No. HP: {$order->customer_phone}";
         $lines[] = "Instagram: {$instagram}";
         $lines[] = "Tanggal Acara: {$eventDate}";
-        $lines[] = "";
-        $lines[] = "*PESANAN*";
+        $lines[] = '';
+        $lines[] = '*PESANAN*';
 
         $i = 1;
         foreach ($order->items as $item) {
             $categoryName = $item->product?->category?->name ?? 'Undangan';
             $unitPriceFormatted = number_format($item->unit_price, 0, ',', '.');
             $subtotalFormatted = number_format($item->subtotal, 0, ',', '.');
+            $isWholesale = $item->isWholesale();
+            $wholesaleTag = $isWholesale ? ' [Grosir]' : '';
+            $wholesalePriceNote = $isWholesale ? ' (Harga Grosir)' : '';
 
-            $lines[] = "{$i}. {$item->product_name} ({$categoryName})";
-            $lines[] = "   {$item->quantity} pcs × Rp {$unitPriceFormatted} = Rp {$subtotalFormatted}";
+            $lines[] = "{$i}. {$item->product_name} ({$categoryName}){$wholesaleTag}";
+            $lines[] = "   {$item->quantity} pcs × Rp {$unitPriceFormatted}{$wholesalePriceNote} = Rp {$subtotalFormatted}";
             $i++;
         }
 
-        $lines[] = "";
-        $lines[] = "Subtotal: Rp " . number_format($order->subtotal, 0, ',', '.');
+        $lines[] = '';
+        $lines[] = 'Subtotal: Rp '.number_format($order->subtotal, 0, ',', '.');
 
         if ($order->discount_total > 0 && ! empty($order->promo_code)) {
-            $lines[] = "Diskon ({$order->promo_code}): -Rp " . number_format($order->discount_total, 0, ',', '.');
+            $lines[] = "Diskon ({$order->promo_code}): -Rp ".number_format($order->discount_total, 0, ',', '.');
         }
 
-        $lines[] = "*Total {$paymentLabel}: Rp " . number_format($order->total_price, 0, ',', '.') . "*";
-        $lines[] = "";
-        $lines[] = "*PENGIRIMAN*";
+        $lines[] = "*Total {$paymentLabel}: Rp ".number_format($order->total_price, 0, ',', '.').'*';
+
+        if ($order->payment_option === 'dp' && $order->remaining_balance > 0) {
+            $lines[] = 'Sisa Pelunasan: Rp '.number_format($order->remaining_balance, 0, ',', '.').' (dilunasi saat pesanan selesai)';
+        }
+
+        $lines[] = '';
+        $lines[] = '*PENGIRIMAN*';
         $lines[] = "Metode: {$order->shipping_method}";
+        $lines[] = 'Ongkir: Free Ongkir (Seluruh Wilayah Provinsi Riau)';
         $lines[] = "Alamat: {$order->shipping_address}";
-        $lines[] = "";
-        $lines[] = "Catatan: " . ($order->notes ?: '-');
-        $lines[] = "";
-        $lines[] = "Mohon konfirmasinya, terima kasih 🙏";
+        $lines[] = '';
+        $lines[] = 'Catatan: '.($order->notes ?: '-');
+        $lines[] = '';
+        $lines[] = 'Mohon konfirmasinya, terima kasih 🙏';
 
         return implode("\n", $lines);
     }

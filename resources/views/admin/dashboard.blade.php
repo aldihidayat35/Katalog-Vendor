@@ -3,7 +3,7 @@
 
     <x-admin.page-header
         title="Ringkasan Operasional"
-        subtitle="Pantau pesanan masuk, performa katalog produk, dan aktivitas pelanggan terkini."
+        subtitle="Pantau pesanan masuk, tren transaksi tahunan, dan performa katalog produk terkini."
     >
         <x-slot:actions>
             <x-button href="{{ route('admin.products.create') }}" variant="primary" size="sm">
@@ -79,7 +79,162 @@
         </x-admin.stat-card>
     </div>
 
-    <!-- 2. RECENT LEADS & RECENT PRODUCTS TABLES -->
+    <!-- 2. ANALYTICS CHARTS SECTION (TREN BULANAN & PIE CHART STATUS) -->
+    <div
+        x-data="dashboardAnalytics()"
+        x-init="init()"
+        class="mb-8 space-y-4"
+    >
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            
+            <!-- LEFT COLUMN: GRAFIK TREN PEMESANAN BULANAN (7 COLS ON LG, 8 ON XL) -->
+            <div class="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/80 shadow-subtle flex flex-col justify-between">
+                <div>
+                    <!-- Header with Title & Year Filter -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-stone-100">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-champagne-600 animate-pulse"></span>
+                                <h3 class="text-lg font-serif font-bold text-charcoal-900">Tren Pemesanan Bulanan</h3>
+                            </div>
+                            <p class="text-xs text-stone-500 mt-0.5">Grafik total pemesanan dan estimasi omset per bulan dalam setahun</p>
+                        </div>
+
+                        <!-- Year Filter Dropdown -->
+                        <div class="flex items-center gap-2">
+                            <label for="yearFilter" class="text-xs font-semibold text-stone-500 uppercase tracking-wider shrink-0">Tahun:</label>
+                            <div class="relative">
+                                <select
+                                    id="yearFilter"
+                                    x-model="selectedYear"
+                                    @change="fetchData()"
+                                    :disabled="isLoading"
+                                    class="text-xs font-bold font-serif text-charcoal-900 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 pr-8 focus:ring-champagne-500 focus:border-champagne-500 transition-colors cursor-pointer"
+                                >
+                                    @foreach($availableYears as $year)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Year Summary Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 pb-2">
+                        <div class="bg-ivory-100/70 rounded-2xl p-3 border border-champagne-200/60">
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-stone-500 block">Total Pesanan (<span x-text="selectedYear"></span>)</span>
+                            <div class="flex items-baseline gap-1 mt-0.5">
+                                <span class="text-xl font-serif font-bold text-charcoal-900" x-text="trendTotalOrders"></span>
+                                <span class="text-xs text-stone-500">order</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-ivory-100/70 rounded-2xl p-3 border border-champagne-200/60">
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-stone-500 block">Total Omset (<span x-text="selectedYear"></span>)</span>
+                            <span class="text-base sm:text-lg font-serif font-bold text-champagne-700 block truncate mt-0.5" x-text="formatRupiah(trendTotalRevenue)"></span>
+                        </div>
+
+                        <div class="col-span-2 sm:col-span-1 bg-stone-50 rounded-2xl p-3 border border-stone-200/60 flex items-center justify-between sm:block">
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-stone-500 block">Rata-rata / Bulan</span>
+                            <span class="text-sm font-semibold text-stone-700 block mt-0.5" x-text="(trendTotalOrders / 12).toFixed(1) + ' order/bln'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Chart Area with Loading Overlay -->
+                <div class="relative mt-4 flex-1 min-h-[280px]">
+                    <div x-show="isLoading" class="absolute inset-0 z-10 bg-white/70 backdrop-blur-2xs flex items-center justify-center rounded-2xl" style="display: none;">
+                        <div class="flex items-center gap-2 text-xs font-semibold text-charcoal-800 bg-white px-4 py-2 rounded-xl shadow-md border border-stone-200">
+                            <svg class="w-4 h-4 animate-spin text-champagne-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Memuat data...</span>
+                        </div>
+                    </div>
+                    <canvas id="monthlyTrendChart" class="w-full h-full"></canvas>
+                </div>
+
+                <!-- Footer Hint -->
+                <div class="pt-3 mt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
+                    <span>Garis Emas: Jumlah Pesanan • Garis Gelap: Nilai Transaksi (Rp)</span>
+                    <span class="hidden sm:inline">Arahkan kursor ke titik grafik untuk detail</span>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: PIE/DOUGHNUT CHART STATUS PESANAN (5 COLS ON LG, 4 ON XL) -->
+            <div class="lg:col-span-5 xl:col-span-4 bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/80 shadow-subtle flex flex-col justify-between">
+                <div>
+                    <!-- Header with Title & Month Filter -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-stone-100">
+                        <div>
+                            <h3 class="text-lg font-serif font-bold text-charcoal-900">Status Pesanan</h3>
+                            <p class="text-xs text-stone-500 mt-0.5">Proporsi status order</p>
+                        </div>
+
+                        <!-- Month Filter Dropdown -->
+                        <div class="flex items-center gap-2">
+                            <div class="relative w-full sm:w-auto">
+                                <select
+                                    id="monthFilter"
+                                    x-model="selectedMonth"
+                                    @change="fetchData()"
+                                    :disabled="isLoading"
+                                    class="w-full text-xs font-semibold text-charcoal-900 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 pr-8 focus:ring-champagne-500 focus:border-champagne-500 transition-colors cursor-pointer"
+                                >
+                                    @foreach($monthsList as $mVal => $mTitle)
+                                        <option value="{{ $mVal }}">{{ $mTitle }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pie / Doughnut Chart Container -->
+                    <div class="relative my-4 flex items-center justify-center">
+                        <div class="w-48 h-48 sm:w-52 sm:h-52 relative">
+                            <canvas id="orderStatusPieChart" class="w-full h-full"></canvas>
+                            <!-- Center Total Counter inside doughnut -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                                <span class="text-2xl font-serif font-bold text-charcoal-900" x-text="pieTotalOrders"></span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider text-stone-400">Total Order</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Distribution Details List -->
+                <div class="space-y-2.5 pt-3 border-t border-stone-100">
+                    <template x-for="item in statusDetails" :key="item.key">
+                        <div class="text-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background-color: ${item.color}`"></span>
+                                    <span class="font-medium text-charcoal-800" x-text="item.label"></span>
+                                </div>
+                                <div class="flex items-center gap-1.5 font-mono">
+                                    <span class="font-bold text-charcoal-900" x-text="item.count"></span>
+                                    <span class="text-stone-400 text-[10px]" x-text="`(${item.percentage}%)`"></span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    class="h-full rounded-full transition-all duration-500"
+                                    :style="`width: ${item.percentage}%; background-color: ${item.color}`"
+                                ></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="pieTotalOrders === 0" class="py-4 text-center text-xs text-stone-400">
+                        Tidak ada transaksi pesanan pada periode terpilih.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. RECENT LEADS & RECENT PRODUCTS TABLES -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         <!-- Recent Leads (2 cols) -->
@@ -176,4 +331,252 @@
             </div>
         </div>
     </div>
+
+    <!-- Chart.js and Dashboard Script -->
+    @push('scripts')
+        <script src="{{ asset('vendor/chartjs/chart.umd.min.js') }}"></script>
+        <script>
+            function dashboardAnalytics() {
+                return {
+                    selectedYear: {{ $selectedYear }},
+                    selectedMonth: '{{ $selectedMonth }}',
+                    isLoading: false,
+                    analyticsData: @json($initialAnalytics),
+                    trendChart: null,
+                    pieChart: null,
+
+                    get trendTotalOrders() {
+                        return this.analyticsData?.monthly_trend?.total_orders ?? 0;
+                    },
+                    get trendTotalRevenue() {
+                        return this.analyticsData?.monthly_trend?.total_revenue ?? 0;
+                    },
+                    get pieTotalOrders() {
+                        return this.analyticsData?.status_breakdown?.total ?? 0;
+                    },
+                    get statusDetails() {
+                        return this.analyticsData?.status_breakdown?.details ?? [];
+                    },
+
+                    init() {
+                        this.$nextTick(() => {
+                            this.initCharts();
+                        });
+                    },
+
+                    formatRupiah(num) {
+                        return 'Rp ' + (new Intl.NumberFormat('id-ID').format(num || 0));
+                    },
+
+                    async fetchData() {
+                        this.isLoading = true;
+                        try {
+                            const url = `{{ route('admin.dashboard.analytics') }}?year=${this.selectedYear}&month=${this.selectedMonth}`;
+                            const res = await fetch(url, {
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            if (res.ok) {
+                                this.analyticsData = await res.json();
+                                this.updateCharts();
+                            }
+                        } catch (err) {
+                            console.error('Gagal mengambil data analitik:', err);
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    },
+
+                    initCharts() {
+                        if (typeof Chart === 'undefined') {
+                            setTimeout(() => this.initCharts(), 150);
+                            return;
+                        }
+
+                        // 1. Inisialisasi Grafik Tren Bulanan (Line Area)
+                        const trendCtx = document.getElementById('monthlyTrendChart');
+                        if (trendCtx) {
+                            this.trendChart = new Chart(trendCtx, {
+                                type: 'line',
+                                data: {
+                                    labels: this.analyticsData.monthly_trend.labels,
+                                    datasets: [
+                                        {
+                                            label: 'Jumlah Pesanan',
+                                            data: this.analyticsData.monthly_trend.orders,
+                                            borderColor: '#C5A059',
+                                            backgroundColor: 'rgba(197, 160, 89, 0.12)',
+                                            borderWidth: 3,
+                                            fill: true,
+                                            tension: 0.38,
+                                            pointBackgroundColor: '#C5A059',
+                                            pointBorderColor: '#ffffff',
+                                            pointBorderWidth: 2,
+                                            pointRadius: 4.5,
+                                            pointHoverRadius: 7,
+                                            yAxisID: 'yOrders',
+                                        },
+                                        {
+                                            label: 'Nilai Pesanan (Rp)',
+                                            data: this.analyticsData.monthly_trend.revenue,
+                                            borderColor: '#2A2826',
+                                            backgroundColor: 'transparent',
+                                            borderWidth: 2,
+                                            borderDash: [5, 5],
+                                            pointBackgroundColor: '#2A2826',
+                                            pointBorderColor: '#ffffff',
+                                            pointBorderWidth: 2,
+                                            pointRadius: 4,
+                                            pointHoverRadius: 6,
+                                            tension: 0.38,
+                                            yAxisID: 'yRevenue',
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    interaction: {
+                                        mode: 'index',
+                                        intersect: false,
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            position: 'top',
+                                            align: 'end',
+                                            labels: {
+                                                usePointStyle: true,
+                                                boxWidth: 8,
+                                                padding: 16,
+                                                font: { family: 'Plus Jakarta Sans', size: 12, weight: '500' }
+                                            }
+                                        },
+                                        tooltip: {
+                                            backgroundColor: '#1C1917',
+                                            titleFont: { family: 'Plus Jakarta Sans', size: 13, weight: 'bold' },
+                                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                                            padding: 12,
+                                            cornerRadius: 12,
+                                            boxPadding: 6,
+                                            callbacks: {
+                                                label: function(context) {
+                                                    if (context.datasetIndex === 0) {
+                                                        return ` Pesanan: ${context.parsed.y} order`;
+                                                    }
+                                                    return ` Nilai: Rp ${new Intl.NumberFormat('id-ID').format(context.parsed.y)}`;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            grid: { display: false },
+                                            ticks: {
+                                                font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' },
+                                                color: '#78716C'
+                                            }
+                                        },
+                                        yOrders: {
+                                            type: 'linear',
+                                            display: true,
+                                            position: 'left',
+                                            beginAtZero: true,
+                                            ticks: {
+                                                precision: 0,
+                                                font: { family: 'Plus Jakarta Sans', size: 11 },
+                                                color: '#78716C'
+                                            },
+                                            grid: { color: 'rgba(0, 0, 0, 0.04)' }
+                                        },
+                                        yRevenue: {
+                                            type: 'linear',
+                                            display: true,
+                                            position: 'right',
+                                            beginAtZero: true,
+                                            grid: { drawOnChartArea: false },
+                                            ticks: {
+                                                callback: function(val) {
+                                                    if (val >= 1000000) return (val / 1000000).toFixed(1) + ' jt';
+                                                    if (val >= 1000) return (val / 1000).toFixed(0) + ' rb';
+                                                    return val;
+                                                },
+                                                font: { family: 'Plus Jakarta Sans', size: 11 },
+                                                color: '#78716C'
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // 2. Inisialisasi Donut / Pie Chart Status Pesanan
+                        const pieCtx = document.getElementById('orderStatusPieChart');
+                        if (pieCtx) {
+                            const total = this.analyticsData.status_breakdown.total;
+                            const hasData = total > 0;
+
+                            this.pieChart = new Chart(pieCtx, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: hasData ? this.analyticsData.status_breakdown.labels : ['Belum Ada Pesanan'],
+                                    datasets: [{
+                                        data: hasData ? this.analyticsData.status_breakdown.counts : [1],
+                                        backgroundColor: hasData ? this.analyticsData.status_breakdown.colors : ['#E7E5E4'],
+                                        borderWidth: 2,
+                                        borderColor: '#ffffff',
+                                        hoverOffset: 6
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    cutout: '68%',
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            enabled: hasData,
+                                            backgroundColor: '#1C1917',
+                                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                                            padding: 10,
+                                            cornerRadius: 10,
+                                            callbacks: {
+                                                label: (context) => {
+                                                    const count = context.parsed;
+                                                    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                                                    return ` ${context.label}: ${count} order (${pct}%)`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    },
+
+                    updateCharts() {
+                        if (this.trendChart) {
+                            this.trendChart.data.labels = this.analyticsData.monthly_trend.labels;
+                            this.trendChart.data.datasets[0].data = this.analyticsData.monthly_trend.orders;
+                            this.trendChart.data.datasets[1].data = this.analyticsData.monthly_trend.revenue;
+                            this.trendChart.update();
+                        }
+
+                        if (this.pieChart) {
+                            const total = this.analyticsData.status_breakdown.total;
+                            const hasData = total > 0;
+
+                            this.pieChart.data.labels = hasData ? this.analyticsData.status_breakdown.labels : ['Belum Ada Pesanan'];
+                            this.pieChart.data.datasets[0].data = hasData ? this.analyticsData.status_breakdown.counts : [1];
+                            this.pieChart.data.datasets[0].backgroundColor = hasData ? this.analyticsData.status_breakdown.colors : ['#E7E5E4'];
+                            this.pieChart.options.plugins.tooltip.enabled = hasData;
+                            this.pieChart.update();
+                        }
+                    }
+                };
+            }
+        </script>
+    @endpush
 </x-admin-layout>

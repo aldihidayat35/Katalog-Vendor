@@ -85,6 +85,7 @@ class Promo extends Model
             if ($this->max_discount !== null && $discount > $this->max_discount) {
                 return $this->max_discount;
             }
+
             return $discount;
         }
 

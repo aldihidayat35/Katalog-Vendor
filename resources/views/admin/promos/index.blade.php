@@ -1,8 +1,8 @@
 <x-admin-layout>
-    <x-slot:heading>Manajemen Kupon &amp; Promo</x-slot:heading>
+    <x-slot:heading>Manajemen Kupon & Promo</x-slot:heading>
 
     <x-admin.page-header
-        title="Daftar Kupon &amp; Promo"
+        title="Daftar Kupon & Promo"
         subtitle="Kelola kode voucher diskon pesanan, batasan kuota pemakaian, dan periode promosi."
     >
         <x-slot:actions>

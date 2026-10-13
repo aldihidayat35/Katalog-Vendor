@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
@@ -8,6 +7,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderHistoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,12 +36,12 @@ Route::get('/contact', fn () => redirect()->route('contact'));
 
 // XML Sitemap SEO
 Route::get('/sitemap.xml', function () {
-    $products = \App\Models\Product::active()
+    $products = Product::active()
         ->whereHas('category', fn ($q) => $q->where('is_active', true))
         ->select(['slug', 'updated_at'])
         ->get();
 
-    $categories = \App\Models\Category::active()
+    $categories = Category::active()
         ->select(['slug', 'updated_at'])
         ->get();
 
@@ -55,6 +56,7 @@ Route::get('/sitemap.xml', function () {
 Route::get('/keranjang/masuk', function (Request $request) {
     session()->put('url.intended', $request->query('redirect', route('home')));
     session()->flash('info', 'Silakan login untuk menambahkan ke keranjang');
+
     return redirect()->route('login');
 })->name('cart.login-prompt');
 

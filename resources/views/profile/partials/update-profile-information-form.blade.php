@@ -17,6 +17,29 @@
         @csrf
         @method('patch')
 
+        <!-- Avatar & Account Status Card -->
+        <div class="flex items-center gap-4 p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+            @if($user->avatar_url)
+                <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-16 h-16 rounded-full object-cover shadow-sm ring-2 ring-champagne/40">
+            @else
+                <div class="w-16 h-16 rounded-full bg-champagne-100 text-champagne-800 flex items-center justify-center font-bold text-xl ring-2 ring-champagne/40">
+                    {{ substr($user->name, 0, 1) }}
+                </div>
+            @endif
+            <div>
+                <h3 class="text-sm font-bold text-charcoal-900">{{ $user->name }}</h3>
+                <p class="text-xs text-stone-500 font-medium">
+                    {{ $user->username ? '@' . $user->username : 'Belum diatur' }}
+                </p>
+                @if($user->google_id && config('services.google.enabled', false))
+                    <span class="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17Z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.27 21.43 7.35 24 12 24Z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.27 2.57 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/></svg>
+                        Terhubung dengan Akun Google
+                    </span>
+                @endif
+            </div>
+        </div>
+
         <div>
             <label for="name" class="block text-xs font-bold text-charcoal-700 mb-1">
                 Nama Lengkap <span class="text-rose-500">*</span>
@@ -28,10 +51,28 @@
                 class="w-full rounded-xl text-sm border-stone-300 focus:border-champagne focus:ring-champagne"
                 value="{{ old('name', $user->name) }}"
                 required
-                autofocus
                 autocomplete="name"
             />
             <x-input-error class="mt-1" :messages="$errors->get('name')" />
+        </div>
+
+        <div>
+            <label for="username" class="block text-xs font-bold text-charcoal-700 mb-1">
+                Username
+            </label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-stone-400 text-sm">@</span>
+                <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="username"
+                    class="w-full pl-8 rounded-xl text-sm border-stone-300 focus:border-champagne focus:ring-champagne"
+                    value="{{ old('username', $user->username) }}"
+                />
+            </div>
+            <span class="text-[10px] text-stone-400 mt-0.5 block">Digunakan sebagai identitas unik akun Anda.</span>
+            <x-input-error class="mt-1" :messages="$errors->get('username')" />
         </div>
 
         <div>

@@ -25,6 +25,15 @@
             price: {{ old('price', $product->price) }},
             discountPrice: '{{ old('discount_price', $product->discount_price ?? '') }}',
             dpPrice: {{ old('dp_price', $product->dp_price) }},
+            tiers: {{ json_encode(old('tiers', $product->priceTiers->map(fn($t) => ['min_quantity' => $t->min_quantity, 'max_quantity' => $t->max_quantity, 'unit_price' => $t->unit_price])->toArray())) }},
+            addTier() {
+                let lastTier = this.tiers.length > 0 ? this.tiers[this.tiers.length - 1] : null;
+                let nextMin = lastTier && lastTier.max_quantity ? parseInt(lastTier.max_quantity) + 1 : (lastTier && lastTier.min_quantity ? parseInt(lastTier.min_quantity) + 100 : 100);
+                this.tiers.push({ min_quantity: nextMin, max_quantity: '', unit_price: '' });
+            },
+            removeTier(index) {
+                this.tiers.splice(index, 1);
+            },
             recalculateDp() {
                 let base = (this.discountPrice && parseInt(this.discountPrice) > 0) ? parseInt(this.discountPrice) : parseInt(this.price || 0);
                 this.dpPrice = Math.round(base * 0.5);
@@ -318,10 +327,110 @@
             </div>
         </div>
 
-        <!-- 3. GALERI FOTO PRODUK -->
+        <!-- 3. SKEMA HARGA GROSIR (TIERED PRICING) -->
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200/80 shadow-subtle space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3">
+                <div>
+                    <h3 class="text-lg font-serif font-bold text-charcoal-900">
+                        3. Skema Harga Grosir / Bertingkat (Opsional)
+                    </h3>
+                    <p class="text-xs text-stone-500 mt-0.5">
+                        Atur harga satuan berbeda berdasarkan total kuantitas pemesanan (contoh: 1–100 pcs: Rp 1.000, 101–200 pcs: Rp 800, ≥201 pcs: Rp 700).
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    @click="addTier()"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-champagne-50 text-champagne-800 hover:bg-champagne-100 border border-champagne-200 transition-colors shrink-0"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Tambah Tingkatan Grosir
+                </button>
+            </div>
+
+            <template x-if="tiers.length === 0">
+                <div class="text-center py-6 px-4 bg-stone-50/70 rounded-2xl border border-dashed border-stone-200">
+                    <p class="text-xs text-stone-500">
+                        Belum ada tingkatan harga grosir. Produk ini akan menggunakan harga satuan normal di atas.
+                    </p>
+                    <button
+                        type="button"
+                        @click="addTier()"
+                        class="mt-2 text-xs font-semibold text-champagne-700 hover:underline"
+                    >
+                        + Tambah Tingkatan Grosir Pertama
+                    </button>
+                </div>
+            </template>
+
+            <div x-show="tiers.length > 0" class="space-y-3">
+                <div class="hidden sm:grid grid-cols-12 gap-3 text-[11px] font-bold text-stone-500 uppercase tracking-wider px-2">
+                    <div class="col-span-1 text-center">#</div>
+                    <div class="col-span-3">Min Qty (pcs) <span class="text-rose-500">*</span></div>
+                    <div class="col-span-4">Max Qty (pcs, kosongkan = tanpa batas)</div>
+                    <div class="col-span-3">Harga Satuan (Rp/pcs) <span class="text-rose-500">*</span></div>
+                    <div class="col-span-1 text-center">Aksi</div>
+                </div>
+
+                <template x-for="(tier, idx) in tiers" :key="idx">
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center p-3 sm:p-2 bg-stone-50/70 sm:bg-transparent rounded-2xl sm:rounded-none border sm:border-b sm:border-stone-100 sm:border-t-0 sm:border-x-0">
+                        <div class="col-span-1 text-center font-bold text-xs text-stone-400">
+                            <span class="sm:inline" x-text="idx + 1"></span>
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block sm:hidden text-[11px] font-semibold text-stone-500 mb-1">Min Qty (pcs) *</label>
+                            <input
+                                type="number"
+                                :name="'tiers[' + idx + '][min_quantity]'"
+                                x-model.number="tier.min_quantity"
+                                min="1"
+                                required
+                                placeholder="Contoh: 1"
+                                class="w-full text-xs rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
+                            >
+                        </div>
+                        <div class="col-span-4">
+                            <label class="block sm:hidden text-[11px] font-semibold text-stone-500 mb-1">Max Qty (pcs)</label>
+                            <input
+                                type="number"
+                                :name="'tiers[' + idx + '][max_quantity]'"
+                                x-model.number="tier.max_quantity"
+                                :min="tier.min_quantity || 1"
+                                placeholder="Kosongkan jika tidak terbatas"
+                                class="w-full text-xs rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
+                            >
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block sm:hidden text-[11px] font-semibold text-stone-500 mb-1">Harga Satuan (Rp/pcs) *</label>
+                            <input
+                                type="number"
+                                :name="'tiers[' + idx + '][unit_price]'"
+                                x-model.number="tier.unit_price"
+                                min="0"
+                                required
+                                placeholder="Contoh: 800"
+                                class="w-full text-xs font-semibold text-charcoal-900 rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
+                            >
+                        </div>
+                        <div class="col-span-1 text-center">
+                            <button
+                                type="button"
+                                @click="removeTier(idx)"
+                                class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                                title="Hapus tingkatan"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- 4. GALERI FOTO PRODUK -->
         <div class="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200/80 shadow-subtle space-y-6">
             <h3 class="text-lg font-serif font-bold text-charcoal-900 border-b border-stone-100 pb-3">
-                3. Galeri Foto Produk Saat Ini
+                4. Galeri Foto Produk Saat Ini
             </h3>
 
             <!-- Existing Images List -->

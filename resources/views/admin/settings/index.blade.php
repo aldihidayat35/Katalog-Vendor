@@ -2,13 +2,14 @@
     <x-slot:heading>Pengaturan Situs</x-slot:heading>
 
     <x-admin.page-header
-        title="Pengaturan Website &amp; Kontak"
+        title="Pengaturan Website & Kontak"
         subtitle="Kelola identitas brand, nomor WhatsApp admin untuk checkout, metode pengiriman, dan pesan konsultasi."
     />
 
     <form
         method="POST"
         action="{{ route('admin.settings.update') }}"
+        enctype="multipart/form-data"
         x-data="{
             shippingMethods: {{ json_encode($settings['shipping_methods']) }},
             addShippingMethod() {
@@ -34,7 +35,7 @@
         <!-- 1. IDENTITAS & KONTAK UTAMA -->
         <div class="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200/80 shadow-subtle space-y-6">
             <h3 class="text-lg font-serif font-bold text-charcoal-900 border-b border-stone-100 pb-3">
-                1. Identitas Brand &amp; Saluran Kontak
+                1. Identitas Brand, Logo &amp; Saluran Kontak
             </h3>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -116,6 +117,113 @@
                         class="w-full text-sm font-mono rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
                     >
                     @error('instagram_url')
+                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <!-- Logo & Favicon Upload Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-stone-100">
+                <!-- Site Logo -->
+                <div x-data="{ logoPreview: '{{ site_logo_url() }}', removeLogo: false }">
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+                        Logo Utama Website
+                    </label>
+                    <div class="p-4 rounded-2xl border border-stone-200 bg-stone-50/50 space-y-3">
+                        <div class="flex items-center gap-4">
+                            <!-- Preview Box -->
+                            <div class="w-16 h-16 rounded-2xl bg-white border border-stone-200 flex items-center justify-center p-2 shadow-sm overflow-hidden flex-shrink-0">
+                                <template x-if="logoPreview && !removeLogo">
+                                    <img :src="logoPreview" alt="Logo Preview" class="max-h-full max-w-full object-contain">
+                                </template>
+                                <template x-if="!logoPreview || removeLogo">
+                                    <div class="w-10 h-10 rounded-full bg-champagne-500 text-white flex items-center justify-center font-serif text-lg font-bold">
+                                        {{ substr(setting('site_name', 'G'), 0, 1) }}
+                                    </div>
+                                </template>
+                            </div>
+                            <!-- Upload Controls -->
+                            <div class="flex-1 min-w-0">
+                                <input
+                                    type="file"
+                                    name="site_logo"
+                                    id="site_logo"
+                                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                                    class="block w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-champagne-100 file:text-champagne-800 hover:file:bg-champagne-200 cursor-pointer"
+                                    @change="
+                                        const file = $event.target.files[0];
+                                        if (file) {
+                                            logoPreview = URL.createObjectURL(file);
+                                            removeLogo = false;
+                                        }
+                                    "
+                                >
+                                <p class="text-[11px] text-stone-400 mt-1">Format: PNG, JPG, SVG, WEBP (Maks. 2MB). Ditampilkan di Navbar, Sidebar Admin, dan Footer.</p>
+                            </div>
+                        </div>
+
+                        @if(setting('site_logo'))
+                            <div class="pt-2 border-t border-stone-200/60 flex items-center justify-between">
+                                <span class="text-xs text-stone-600 font-medium">Logo saat ini aktif</span>
+                                <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-rose-600 hover:text-rose-700 font-medium">
+                                    <input type="checkbox" name="remove_logo" value="1" x-model="removeLogo" class="rounded border-stone-300 text-rose-600 focus:ring-rose-500">
+                                    <span>Hapus Logo (Reset ke Bawaan)</span>
+                                </label>
+                            </div>
+                        @endif
+                    </div>
+                    @error('site_logo')
+                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Site Favicon -->
+                <div x-data="{ faviconPreview: '{{ setting('site_favicon') ? site_favicon_url() : '' }}', removeFavicon: false }">
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+                        Favicon (Ikon Tab Browser)
+                    </label>
+                    <div class="p-4 rounded-2xl border border-stone-200 bg-stone-50/50 space-y-3">
+                        <div class="flex items-center gap-4">
+                            <!-- Preview Box -->
+                            <div class="w-16 h-16 rounded-2xl bg-white border border-stone-200 flex items-center justify-center p-2 shadow-sm overflow-hidden flex-shrink-0">
+                                <template x-if="faviconPreview && !removeFavicon">
+                                    <img :src="faviconPreview" alt="Favicon Preview" class="w-8 h-8 object-contain">
+                                </template>
+                                <template x-if="!faviconPreview || removeFavicon">
+                                    <span class="text-2xl">🌐</span>
+                                </template>
+                            </div>
+                            <!-- Upload Controls -->
+                            <div class="flex-1 min-w-0">
+                                <input
+                                    type="file"
+                                    name="site_favicon"
+                                    id="site_favicon"
+                                    accept="image/x-icon,image/png,image/jpeg,image/svg+xml,image/webp"
+                                    class="block w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-champagne-100 file:text-champagne-800 hover:file:bg-champagne-200 cursor-pointer"
+                                    @change="
+                                        const file = $event.target.files[0];
+                                        if (file) {
+                                            faviconPreview = URL.createObjectURL(file);
+                                            removeFavicon = false;
+                                        }
+                                    "
+                                >
+                                <p class="text-[11px] text-stone-400 mt-1">Format: ICO, PNG, SVG (Maks. 1MB). Ditampilkan di tab browser.</p>
+                            </div>
+                        </div>
+
+                        @if(setting('site_favicon'))
+                            <div class="pt-2 border-t border-stone-200/60 flex items-center justify-between">
+                                <span class="text-xs text-stone-600 font-medium">Favicon saat ini aktif</span>
+                                <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-rose-600 hover:text-rose-700 font-medium">
+                                    <input type="checkbox" name="remove_favicon" value="1" x-model="removeFavicon" class="rounded border-stone-300 text-rose-600 focus:ring-rose-500">
+                                    <span>Hapus Favicon (Reset ke Bawaan)</span>
+                                </label>
+                            </div>
+                        @endif
+                    </div>
+                    @error('site_favicon')
                         <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>

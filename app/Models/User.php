@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -20,12 +21,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
+        'avatar_url',
         'password',
         'phone',
         'instagram',
         'address',
         'role',
+        'google_id',
     ];
 
     /**
@@ -73,5 +77,36 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Generate a unique username from an email address or name.
+     */
+    public static function generateUniqueUsername(string $email, ?string $name = null): string
+    {
+        $base = strstr($email, '@', true) ?: ($name ? Str::slug($name, '_') : 'user');
+        $base = strtolower(preg_replace('/[^a-zA-Z0-9_]/', '', $base)) ?: 'user';
+
+        $candidate = $base;
+        $attempt = 1;
+
+        while (static::where('username', $candidate)->exists()) {
+            $candidate = $base.'_'.mt_rand(10, 9999);
+            $attempt++;
+            if ($attempt > 50) {
+                $candidate = $base.'_'.substr(uniqid(), -4);
+                break;
+            }
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * Get the avatar image url or fallback.
+     */
+    public function getDisplayAvatarUrl(): ?string
+    {
+        return $this->avatar_url;
     }
 }

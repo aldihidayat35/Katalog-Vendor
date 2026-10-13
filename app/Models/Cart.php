@@ -35,11 +35,19 @@ class Cart extends Model
 
     public function getSubtotalAttribute(): int
     {
-        return $this->product ? ($this->product->final_price * $this->quantity) : 0;
+        if (! $this->product) {
+            return 0;
+        }
+
+        return $this->product->getUnitPriceForQuantity($this->quantity) * $this->quantity;
     }
 
     public function getDpSubtotalAttribute(): int
     {
-        return $this->product ? ($this->product->dp_price * $this->quantity) : 0;
+        if (! $this->product) {
+            return 0;
+        }
+
+        return $this->product->getDpPriceForQuantity($this->quantity) * $this->quantity;
     }
 }

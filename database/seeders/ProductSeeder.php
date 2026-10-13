@@ -247,6 +247,11 @@ class ProductSeeder extends Seeder
 
             $data['category_id'] = $category->id;
 
+            $unitFinalPrice = ! empty($data['discount_price']) ? (int) $data['discount_price'] : (int) $data['price'];
+            if (empty($data['dp_price']) || $data['dp_price'] > $unitFinalPrice) {
+                $data['dp_price'] = (int) round($unitFinalPrice * 0.5);
+            }
+
             $product = Product::updateOrCreate(
                 ['slug' => $data['slug']],
                 $data

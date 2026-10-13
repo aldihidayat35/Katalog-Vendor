@@ -2,7 +2,7 @@
     <x-slot:heading>Manajemen Pesanan (Leads)</x-slot:heading>
 
     <x-admin.page-header
-        title="Daftar Pesanan &amp; Leads Masuk"
+        title="Daftar Pesanan & Leads Masuk"
         subtitle="Pantau data checkout pelanggan, update status tindak lanjut WhatsApp, dan catat progres pesanan."
     >
         <x-slot:actions>
@@ -125,9 +125,12 @@
                 <!-- Total & Payment Option -->
                 <td class="px-6 py-4">
                     <span class="font-semibold text-charcoal-900 block">{{ rupiah($order->total_price) }}</span>
-                    <span class="text-xs uppercase font-semibold text-stone-500">
-                        {{ $order->payment_option === 'dp' ? 'Uang Muka (DP)' : 'Full Payment' }}
+                    <span class="text-xs font-semibold {{ $order->is_dp ? 'text-champagne-700' : 'text-stone-500' }}">
+                        {{ $order->payment_label }}
                     </span>
+                    @if ($order->is_dp && $order->remaining_balance > 0)
+                        <span class="block text-[11px] text-stone-500">Sisa: {{ rupiah($order->remaining_balance) }}</span>
+                    @endif
                     @if ($order->promo_code)
                         <span class="block text-[11px] text-emerald-700 font-mono">Promo: {{ $order->promo_code }}</span>
                     @endif

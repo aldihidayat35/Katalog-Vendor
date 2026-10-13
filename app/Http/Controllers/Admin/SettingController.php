@@ -7,6 +7,8 @@ use App\Http\Requests\Admin\SettingRequest;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SettingController extends Controller
@@ -28,6 +30,8 @@ class SettingController extends Controller
         }
 
         $settings = [
+            'site_logo' => setting('site_logo'),
+            'site_favicon' => setting('site_favicon'),
             'whatsapp_number' => setting('whatsapp_number', '6281234567890'),
             'site_name' => setting('site_name', 'Katalog Undangan'),
             'site_tagline' => setting('site_tagline', 'Spesialis Undangan Pernikahan Cetak & Digital Eksklusif'),
@@ -47,6 +51,41 @@ class SettingController extends Controller
     {
         $data = $request->validated();
 
+        // Handle Site Logo Upload / Removal
+        if ($request->hasFile('site_logo')) {
+            $oldLogo = setting('site_logo');
+            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
+                Storage::disk('public')->delete($oldLogo);
+            }
+            $logoPath = $request->file('site_logo')->store('settings', 'public');
+            Setting::set('site_logo', $logoPath);
+        } elseif ($request->boolean('remove_logo')) {
+            $oldLogo = setting('site_logo');
+            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
+                Storage::disk('public')->delete($oldLogo);
+            }
+            Setting::set('site_logo', null);
+        }
+
+        // Handle Site Favicon Upload / Removal
+        if ($request->hasFile('site_favicon')) {
+            $oldFavicon = setting('site_favicon');
+            if ($oldFavicon && Storage::disk('public')->exists($oldFavicon)) {
+                Storage::disk('public')->delete($oldFavicon);
+            }
+            $faviconPath = $request->file('site_favicon')->store('settings', 'public');
+            Setting::set('site_favicon', $faviconPath);
+        } elseif ($request->boolean('remove_favicon')) {
+            $oldFavicon = setting('site_favicon');
+            if ($oldFavicon && Storage::disk('public')->exists($oldFavicon)) {
+                Storage::disk('public')->delete($oldFavicon);
+            }
+            Setting::set('site_favicon', null);
+        }
+
+        // Exclude file and action flags from general settings data loop
+        unset($data['site_logo'], $data['site_favicon'], $data['remove_logo'], $data['remove_favicon']);
+
         // Normalize WhatsApp phone number into 62...
         $data['whatsapp_number'] = clean_phone_number($data['whatsapp_number']);
 
@@ -57,7 +96,7 @@ class SettingController extends Controller
             foreach ($methods as $m) {
                 if (! empty($m['name'])) {
                     $cleanMethods[] = [
-                        'id' => ! empty($m['id']) ? \Illuminate\Support\Str::slug($m['id']) : \Illuminate\Support\Str::slug($m['name']),
+                        'id' => ! empty($m['id']) ? Str::slug($m['id']) : Str::slug($m['name']),
                         'name' => trim($m['name']),
                         'desc' => trim($m['desc'] ?? ''),
                     ];

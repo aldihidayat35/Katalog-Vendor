@@ -29,7 +29,7 @@ class Banner extends Model
     public function getImageUrlAttribute(): string
     {
         if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
+            return asset('storage/'.$this->image_path);
         }
 
         return asset('images/placeholder-banner.svg');

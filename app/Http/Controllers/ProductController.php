@@ -13,7 +13,7 @@ class ProductController extends Controller
     public function show(string $slug): View
     {
         $product = Product::where('slug', $slug)
-            ->with(['category', 'images'])
+            ->with(['category', 'images', 'priceTiers'])
             ->first();
 
         if (! $product || ! $product->is_active || ($product->category && ! $product->category->is_active)) {

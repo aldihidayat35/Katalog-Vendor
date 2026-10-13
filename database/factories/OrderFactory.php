@@ -14,11 +14,11 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_number' => 'INV-' . date('Ymd') . '-' . sprintf('%04d', fake()->unique()->numberBetween(1, 9999)),
+            'order_number' => 'INV-'.date('Ymd').'-'.sprintf('%04d', fake()->unique()->numberBetween(1, 9999)),
             'user_id' => User::factory(),
             'customer_name' => fake()->name(),
             'customer_email' => fake()->safeEmail(),
-            'customer_phone' => '0812' . fake()->numerify('########'),
+            'customer_phone' => '0812'.fake()->numerify('########'),
             'instagram_account' => fake()->userName(),
             'event_date' => fake()->dateTimeBetween('+1 week', '+6 months'),
             'shipping_address' => fake()->address(),

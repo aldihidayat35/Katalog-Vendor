@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Admin Panel' }} - {{ config('app.name', 'Katalog Undangan') }}</title>
+    <title>{{ $title ?? 'Admin Panel' }} - {{ setting('site_name', 'Undangin') }}</title>
+    <link rel="icon" href="{{ site_favicon_url() }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,23 +17,27 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body class="min-h-full bg-stone-100 text-charcoal font-sans antialiased flex" x-data="{ sidebarOpen: false }">
+<body class="min-h-screen bg-stone-100 text-charcoal font-sans antialiased flex" x-data="{ sidebarOpen: false }">
 
     <!-- Mobile Sidebar Backdrop -->
     <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity class="fixed inset-0 z-40 bg-charcoal/60 md:hidden"></div>
 
-    <!-- 1. ADMIN SIDEBAR -->
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" class="fixed inset-y-0 left-0 z-50 w-64 bg-charcoal-900 text-stone-300 flex flex-col transition-transform duration-200 ease-in-out md:static md:translate-x-0 shadow-xl border-r border-stone-800">
+    <!-- 1. ADMIN SIDEBAR (FIXED / STICKY ON VIEWPORT) -->
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" class="fixed inset-y-0 left-0 z-50 w-64 bg-charcoal-900 text-stone-300 flex flex-col transition-transform duration-200 ease-in-out shadow-xl border-r border-stone-800">
         
         <!-- Sidebar Brand -->
         <div class="h-20 flex items-center justify-between px-6 border-b border-stone-800">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-champagne-500 text-white flex items-center justify-center font-serif text-lg font-bold">
-                    G
-                </div>
+                @if(site_logo_url())
+                    <img src="{{ site_logo_url() }}" alt="{{ setting('site_name', 'Undangin') }}" class="w-9 h-9 rounded-xl object-contain bg-white/10 p-1">
+                @else
+                    <div class="w-9 h-9 rounded-full bg-champagne-500 text-white flex items-center justify-center font-serif text-lg font-bold">
+                        {{ substr(setting('site_name', 'U'), 0, 1) }}
+                    </div>
+                @endif
                 <div class="flex flex-col">
                     <span class="font-serif text-lg font-bold text-white tracking-tight leading-tight">Admin Panel</span>
-                    <span class="text-[10px] uppercase font-bold tracking-widest text-champagne-400">Galeria Invitation</span>
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-champagne-400">{{ setting('site_name', 'Undangin') }}</span>
                 </div>
             </a>
             <button @click="sidebarOpen = false" class="md:hidden text-stone-400 hover:text-white">
@@ -74,6 +79,12 @@
                 Banner Slider
             </a>
 
+            <!-- Popup Promosi -->
+            <a href="{{ route('admin.popup.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ request()->routeIs('admin.popup.*') ? 'bg-champagne-700 text-white font-semibold' : 'text-stone-300 hover:bg-stone-800 hover:text-white' }}">
+                <svg class="w-5 h-5 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                Popup Promosi
+            </a>
+
             <!-- Pesanan / Leads -->
             <a href="{{ route('admin.orders.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ request()->routeIs('admin.orders.*') ? 'bg-champagne-700 text-white font-semibold' : 'text-stone-300 hover:bg-stone-800 hover:text-white' }}">
                 <svg class="w-5 h-5 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
@@ -103,10 +114,10 @@
     </aside>
 
     <!-- 2. MAIN CONTAINER -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen md:pl-64">
         
-        <!-- Topbar -->
-        <header class="h-20 bg-white border-b border-stone-200 px-4 sm:px-8 flex items-center justify-between">
+        <!-- Topbar (Sticky) -->
+        <header class="sticky top-0 z-30 h-20 bg-white/95 backdrop-blur-md border-b border-stone-200 px-4 sm:px-8 flex items-center justify-between shadow-2xs">
             <div class="flex items-center gap-4">
                 <button @click="sidebarOpen = true" class="md:hidden text-stone-600 hover:text-charcoal focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -153,7 +164,7 @@
         </div>
 
         <!-- Content Area -->
-        <main class="flex-1 overflow-y-auto px-4 sm:px-8 pb-12 pt-2">
+        <main class="flex-1 px-4 sm:px-8 pb-12 pt-2">
             {{ $slot }}
         </main>
     </div>

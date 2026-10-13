@@ -36,6 +36,47 @@
         </a>
     </div>
 
+    <!-- Status Alert Banner -->
+    <div class="rounded-2xl p-4 sm:p-5 border text-xs sm:text-sm flex items-start gap-3 {{ match($order->status) {
+        'confirmed' => 'bg-emerald-50 border-emerald-200 text-emerald-900',
+        'completed' => 'bg-purple-50 border-purple-200 text-purple-900',
+        'cancelled' => 'bg-rose-50 border-rose-200 text-rose-900',
+        'contacted' => 'bg-blue-50 border-blue-200 text-blue-900',
+        default => 'bg-amber-50 border-amber-200 text-amber-900',
+    } }}">
+        <div class="mt-0.5 flex-shrink-0">
+            @if($order->status === 'confirmed' || $order->status === 'completed')
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            @elseif($order->status === 'cancelled')
+                <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            @else
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            @endif
+        </div>
+        <div class="leading-relaxed">
+            @if($order->status === 'lead')
+                <strong class="font-bold block mb-0.5">Status: Menunggu Koordinasi Admin</strong>
+                Pesanan Anda telah tercatat di sistem kami. Silakan hubungi admin via WhatsApp untuk konfirmasi {{ $order->is_dp ? 'pembayaran uang muka (DP 50%) sebesar ' . rupiah($order->dp_amount) : 'pembayaran lunas' }} dan konsultasi pengisian teks undangan.
+            @elseif($order->status === 'contacted')
+                <strong class="font-bold block mb-0.5">Status: Sedang Dalam Koordinasi</strong>
+                Admin kami telah menghubungi Anda atau sedang menyiapkan sampel/draf data undangan Anda.
+            @elseif($order->status === 'confirmed')
+                <strong class="font-bold block mb-0.5">Status: {{ $order->is_dp ? 'DP Diterima & Masuk Antrian Produksi' : 'Pembayaran Terverifikasi & Dalam Produksi' }}</strong>
+                @if($order->is_dp)
+                    Pembayaran DP 50% sebesar <strong>{{ rupiah($order->dp_amount) }}</strong> telah dikonfirmasi! Pesanan Anda saat ini sedang dikerjakan. Sisa pelunasan sebesar <strong>{{ rupiah($order->remaining_balance) }}</strong> akan ditagihkan saat pesanan selesai dan siap dikirim.
+                @else
+                    Pembayaran pesanan telah dikonfirmasi dan lunas. Pesanan Anda sedang diproses oleh tim percetakan.
+                @endif
+            @elseif($order->status === 'completed')
+                <strong class="font-bold block mb-0.5">Status: Pesanan Selesai</strong>
+                Pesanan Anda telah selesai diproduksi dan dikirimkan atau diserahkan sesuai metode pengiriman yang dipilih. Terima kasih atas kepercayaan Anda!
+            @elseif($order->status === 'cancelled')
+                <strong class="font-bold block mb-0.5">Status: Pesanan Dibatalkan</strong>
+                Pesanan ini telah dibatalkan. Jika ada pertanyaan lebih lanjut, silakan hubungi tim kami melalui WhatsApp.
+            @endif
+        </div>
+    </div>
+
     <!-- Status & Overview Box -->
     <div class="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-subtle space-y-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-stone-100 pb-4">
@@ -48,7 +89,7 @@
             <div>
                 <span class="text-[10px] text-stone-400 uppercase tracking-wider block">Skema Pembayaran:</span>
                 <span class="font-bold text-xs text-charcoal-900 block mt-1 uppercase">
-                    {{ $order->payment_option === 'dp' ? 'Uang Muka (DP 50%)' : 'Full Payment (Lunas)' }}
+                    {{ $order->payment_label }}
                 </span>
             </div>
             <div>
@@ -78,8 +119,15 @@
                         @foreach($order->items as $item)
                             <tr>
                                 <td class="py-3 px-4">
-                                    <span class="font-bold text-charcoal-900 block">{{ $item->product_name }}</span>
-                                    <span class="text-[10px] text-stone-400">DP: {{ rupiah($item->dp_price) }} / pcs</span>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-bold text-charcoal-900">{{ $item->product_name }}</span>
+                                        @if($item->isWholesale())
+                                            <span class="px-2 py-0.5 text-[9px] font-bold bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                                                Harga Grosir
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="text-[10px] text-stone-400 block mt-0.5">DP 50%: {{ rupiah($item->dp_price) }} / pcs</span>
                                 </td>
                                 <td class="py-3 px-4 text-center font-semibold">
                                     {{ $item->quantity }} pcs
@@ -98,10 +146,18 @@
         </div>
 
         <!-- Totals Breakdown -->
-        <div class="bg-ivory-50 rounded-2xl p-4 border border-stone-200/80 space-y-2 text-xs">
+        <div class="bg-ivory-50 rounded-2xl p-4 sm:p-5 border border-stone-200/80 space-y-2.5 text-xs">
             <div class="flex justify-between text-stone-600">
                 <span>Subtotal Seluruh Item:</span>
                 <span class="font-semibold text-charcoal-900">{{ rupiah($order->subtotal) }}</span>
+            </div>
+
+            <div class="flex justify-between items-center text-stone-600">
+                <span>Ongkos Kirim:</span>
+                <span class="font-semibold text-emerald-700 inline-flex items-center gap-1.5">
+                    <span class="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 font-bold">Free Ongkir Se-Riau</span>
+                    <span>Rp 0</span>
+                </span>
             </div>
 
             @if($order->discount_total > 0)
@@ -111,8 +167,31 @@
                 </div>
             @endif
 
+            @if($order->is_dp)
+                <div class="p-3.5 rounded-xl bg-champagne-100/60 border border-champagne-200/90 space-y-1.5 my-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-medium text-charcoal-800">Uang Muka (DP 50%):</span>
+                        <span class="font-bold text-champagne-800">{{ rupiah($order->dp_amount) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-stone-600">
+                        <span>Sisa Tagihan Pelunasan:</span>
+                        <span class="font-semibold text-stone-700">{{ rupiah($order->remaining_balance) }}</span>
+                    </div>
+                    <p class="text-[10px] text-stone-500 pt-1 leading-snug">
+                        💡 Dilunasi saat pengerjaan undangan selesai sebelum proses kirim.
+                    </p>
+                </div>
+            @endif
+
             <div class="flex justify-between items-baseline pt-2 border-t border-stone-200">
-                <span class="font-serif font-bold text-base text-charcoal-900">Total Nilai Tagihan:</span>
+                <div>
+                    <span class="font-serif font-bold text-base text-charcoal-900 block">
+                        {{ $order->is_dp ? 'Total Tagihan DP Sekarang:' : 'Total Nilai Tagihan:' }}
+                    </span>
+                    <span class="text-[10px] text-champagne-700 font-medium">
+                        Skema: {{ $order->payment_label }}
+                    </span>
+                </div>
                 <span class="font-serif font-bold text-xl text-champagne-700">
                     {{ rupiah($order->total_price) }}
                 </span>
@@ -153,6 +232,12 @@
             <div>
                 <span class="text-stone-400 block text-[10px] uppercase">Metode Pengiriman:</span>
                 <span class="font-semibold text-charcoal-900">{{ $order->shipping_method }}</span>
+            </div>
+            <div>
+                <span class="text-stone-400 block text-[10px] uppercase">Ongkos Kirim:</span>
+                <span class="font-bold text-emerald-700 inline-flex items-center gap-1.5">
+                    Rp 0 <span class="px-2 py-0.5 text-[9px] bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 font-bold">Free Ongkir Seluruh Riau</span>
+                </span>
             </div>
             <div>
                 <span class="text-stone-400 block text-[10px] uppercase">Alamat Tujuan:</span>

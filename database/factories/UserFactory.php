@@ -26,10 +26,13 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
+            'avatar_url' => null,
+            'google_id' => null,
             'email_verified_at' => now(),
             'phone' => fake()->phoneNumber(),
-            'instagram' => '@' . fake()->userName(),
+            'instagram' => '@'.fake()->userName(),
             'address' => fake()->address(),
             'role' => 'member',
             'password' => static::$password ??= Hash::make('password'),
