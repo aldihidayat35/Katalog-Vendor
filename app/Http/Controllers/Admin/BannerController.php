@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BannerRequest;
 use App\Models\Banner;
+use App\Services\ImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +46,7 @@ class BannerController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('banners', 'public');
+            $data['image_path'] = ImageService::storeAsWebp($request->file('image'), 'banners', 1600);
         }
 
         unset($data['image']);
@@ -77,7 +78,7 @@ class BannerController extends Controller
             if ($banner->image_path && Storage::disk('public')->exists($banner->image_path)) {
                 Storage::disk('public')->delete($banner->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('banners', 'public');
+            $data['image_path'] = ImageService::storeAsWebp($request->file('image'), 'banners', 1600);
         }
 
         unset($data['image']);

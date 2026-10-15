@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CategoryRequest;
 use App\Models\Category;
+use App\Services\ImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -47,7 +48,7 @@ class CategoryController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('categories', 'public');
+            $data['image_path'] = ImageService::storeAsWebp($request->file('image'), 'categories', 1000);
         }
 
         unset($data['image']);
@@ -79,7 +80,7 @@ class CategoryController extends Controller
             if ($category->image_path && Storage::disk('public')->exists($category->image_path)) {
                 Storage::disk('public')->delete($category->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('categories', 'public');
+            $data['image_path'] = ImageService::storeAsWebp($request->file('image'), 'categories', 1000);
         }
 
         unset($data['image']);

@@ -95,7 +95,7 @@
 
             <!-- Image Upload -->
             <div>
-                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Gambar Sampul Kategori (Maks 2 MB)</label>
+                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Gambar Sampul Kategori (Maks 10 MB &bull; Otomatis WebP)</label>
                 <input
                     type="file"
                     name="image"

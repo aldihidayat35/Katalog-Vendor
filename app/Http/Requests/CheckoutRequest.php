@@ -30,7 +30,6 @@ class CheckoutRequest extends FormRequest
             'event_date' => ['required', 'date', 'after_or_equal:today'],
             'shipping_address' => ['required', 'string', 'max:1000'],
             'shipping_method' => ['required', 'string', 'max:100'],
-            'payment_option' => ['required', 'in:dp,full'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -51,8 +50,6 @@ class CheckoutRequest extends FormRequest
             'event_date.after_or_equal' => 'Tanggal acara harus hari ini atau tanggal di masa mendatang.',
             'shipping_address.required' => 'Alamat pengiriman wajib diisi.',
             'shipping_method.required' => 'Metode pengiriman wajib dipilih.',
-            'payment_option.required' => 'Opsi pembayaran wajib dipilih.',
-            'payment_option.in' => 'Pilihan pembayaran harus berupa Uang Muka (DP) atau Full Payment.',
         ];
     }
 }

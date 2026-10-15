@@ -58,27 +58,13 @@
         <!-- CART CONTENT WITH ALPINE STATE -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12"
              x-data="{
-                 paymentOption: '{{ $paymentOption }}',
                  subtotal: {{ $summary['subtotal'] }},
-                 dpSubtotal: {{ $summary['dp_subtotal'] }},
                  discount: {{ $summary['discount'] }},
-                 get remainingBalance() {
-                     return Math.max(0, this.subtotal - this.dpSubtotal);
-                 },
                  get total() {
-                     if (this.paymentOption === 'dp') {
-                         return this.dpSubtotal;
-                     }
                      return Math.max(0, this.subtotal - this.discount);
                  },
                  formatRupiah(num) {
                      return 'Rp ' + (new Intl.NumberFormat('id-ID').format(num));
-                 },
-                 selectPayment(opt) {
-                     this.paymentOption = opt;
-                     fetch('{{ route('cart.index') }}?payment_option=' + opt, {
-                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                     });
                  }
              }">
 
@@ -117,10 +103,6 @@
                                         </span>
                                     @endif
                                     <span class="text-[11px] text-stone-500">/ pcs</span>
-                                </div>
-
-                                <div class="text-[11px] text-stone-500 mt-0.5">
-                                    Uang Muka (DP {{ setting('dp_percentage', 50) }}%): <strong class="text-champagne-800">{{ rupiah($item->unit_dp ?? $item->product->dp_price) }}</strong> / pcs
                                 </div>
                             </div>
 
@@ -162,11 +144,6 @@
                                     <span class="font-serif font-bold text-sm sm:text-base text-charcoal-900 block">
                                         {{ rupiah($item->subtotal) }}
                                     </span>
-                                    <template x-if="paymentOption === 'dp'">
-                                        <span class="text-[11px] text-champagne-700 font-semibold block mt-0.5">
-                                            DP: {{ rupiah($item->dp_subtotal ?? ($item->product->dp_price * $item->quantity)) }}
-                                        </span>
-                                    </template>
                                 </div>
 
                                 <!-- Delete button -->
@@ -193,48 +170,18 @@
 
             <!-- RIGHT: SUMMARY & CHECKOUT SIDEBAR -->
             <div class="lg:col-span-4 space-y-6">
-                <!-- Payment Option Selector Card -->
-                <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-subtle space-y-4">
-                    <h2 class="font-serif text-lg font-bold text-charcoal-900 flex items-center gap-2">
-                        <span>Pilihan Skema Pembayaran</span>
-                    </h2>
-
-                    <div class="space-y-3">
-                        <!-- Full Payment Radio -->
-                        <label
-                            @click="selectPayment('full')"
-                            :class="paymentOption === 'full' ? 'border-champagne bg-champagne-50/40 ring-2 ring-champagne-400' : 'border-stone-200 bg-white'"
-                            class="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all duration-200"
-                        >
-                            <input type="radio" name="payment_choice" value="full" :checked="paymentOption === 'full'" class="mt-1 text-champagne focus:ring-champagne">
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-charcoal-900">Full Payment (Lunas)</span>
-                                    <span class="text-xs font-semibold text-champagne-800" x-text="formatRupiah(Math.max(0, subtotal - discount))">{{ rupiah(max(0, $summary['subtotal'] - $summary['discount'])) }}</span>
-                                </div>
-                                <p class="text-[11px] text-stone-500 mt-0.5 leading-snug">
-                                    Pelunasan 100% di awal. Kupon diskon dan potongan promo dapat diterapkan.
-                                </p>
-                            </div>
-                        </label>
-
-                        <!-- DP Radio -->
-                        <label
-                            @click="selectPayment('dp')"
-                            :class="paymentOption === 'dp' ? 'border-champagne bg-champagne-50/40 ring-2 ring-champagne-400' : 'border-stone-200 bg-white'"
-                            class="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all duration-200"
-                        >
-                            <input type="radio" name="payment_choice" value="dp" :checked="paymentOption === 'dp'" class="mt-1 text-champagne focus:ring-champagne">
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-charcoal-900">Uang Muka (DP {{ setting('dp_percentage', 50) }}%)</span>
-                                    <span class="text-xs font-bold text-champagne-800" x-text="formatRupiah(dpSubtotal)">{{ rupiah($summary['dp_subtotal']) }}</span>
-                                </div>
-                                <p class="text-[11px] text-stone-500 mt-0.5 leading-snug">
-                                    Bayar 50% untuk mulai produksi. Sisa <span class="font-semibold text-stone-700" x-text="formatRupiah(remainingBalance)">{{ rupiah($summary['remaining_balance'] ?? max(0, $summary['subtotal'] - $summary['dp_subtotal'])) }}</span> dilunasi saat pesanan selesai.
-                                </p>
-                            </div>
-                        </label>
+                <!-- Info Skema Pembayaran DP via WhatsApp -->
+                <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-subtle space-y-2.5">
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0 mt-0.5">💬</span>
+                        <div>
+                            <h3 class="text-xs font-bold text-charcoal-900 mb-1">
+                                Opsi DP / Pembayaran Termin
+                            </h3>
+                            <p class="text-[11px] text-stone-500 leading-relaxed">
+                                Ingin membayar dengan Uang Muka (DP)? Silakan selesaikan pesanan terlebih dahulu, lalu negosiasikan skema DP dan jadwal pelunasan langsung bersama Admin kami via WhatsApp.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -251,7 +198,7 @@
                                     {{ session('applied_promo_code') }}
                                 </span>
                                 <span class="text-[11px] text-emerald-600">
-                                    Hemat {{ rupiah($summary['discount']) }} (Khusus Full Payment)
+                                    Hemat {{ rupiah($summary['discount']) }}
                                 </span>
                             </div>
                             <form action="{{ route('cart.promo.remove') }}" method="POST">
@@ -297,41 +244,18 @@
                         </div>
 
                         <!-- Diskon Promo (Tampil hanya jika ada) -->
-                        <template x-if="discount > 0 && paymentOption === 'full'">
+                        <template x-if="discount > 0">
                             <div class="flex justify-between text-emerald-600 font-semibold">
                                 <span>Diskon Promo ({{ session('applied_promo_code') }})</span>
                                 <span>-{{ rupiah($summary['discount']) }}</span>
                             </div>
                         </template>
 
-                        <div class="flex justify-between pt-2 border-t border-stone-100">
-                            <span class="font-bold text-charcoal-900">Skema Terpilih</span>
-                            <span class="font-bold text-champagne-700" x-text="paymentOption === 'dp' ? 'Uang Muka (DP 50%)' : 'Full Payment'"></span>
-                        </div>
-
-                        <!-- Rincian DP Box -->
-                        <template x-if="paymentOption === 'dp'">
-                            <div class="p-3.5 rounded-2xl bg-champagne-50/80 border border-champagne-200/90 space-y-2 mt-2">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="font-medium text-charcoal-800">Tagihan DP 50% (Bayar Sekarang):</span>
-                                    <span class="font-bold text-champagne-800" x-text="formatRupiah(dpSubtotal)">{{ rupiah($summary['dp_subtotal']) }}</span>
-                                </div>
-                                <div class="flex justify-between items-center text-xs text-stone-600">
-                                    <span>Sisa Pelunasan Nanti:</span>
-                                    <span class="font-semibold text-stone-700" x-text="formatRupiah(remainingBalance)">{{ rupiah($summary['remaining_balance'] ?? max(0, $summary['subtotal'] - $summary['dp_subtotal'])) }}</span>
-                                </div>
-                                <p class="text-[10px] text-stone-500 border-t border-champagne-200/60 pt-2 leading-relaxed">
-                                    ℹ️ Sisa pelunasan dibayarkan setelah sampel/draft desain disetujui dan undangan siap dikirim.
-                                </p>
-                            </div>
-                        </template>
-
                         <div class="flex justify-between items-baseline pt-2 border-t border-stone-200 text-sm">
                             <div>
-                                <span class="font-serif font-bold text-base text-charcoal-900 block" x-text="paymentOption === 'dp' ? 'Total Bayar Sekarang (DP):' : 'Total Bayar:'">
-                                    Total Bayar:
+                                <span class="font-serif font-bold text-base text-charcoal-900 block">
+                                    Total Pesanan:
                                 </span>
-                                <span class="text-[10px] text-stone-400 block" x-text="paymentOption === 'dp' ? 'Uang Muka 50% pesanan' : 'Pelunasan penuh'"></span>
                             </div>
                             <span class="font-serif font-bold text-xl text-champagne-700" x-text="formatRupiah(total)">
                                 {{ rupiah($summary['total']) }}
@@ -341,7 +265,7 @@
 
                     <!-- Checkout Button -->
                     <div class="pt-2">
-                        <a :href="'{{ route('checkout.index') }}?payment_option=' + paymentOption" class="w-full py-4 rounded-full bg-champagne hover:bg-champagne-600 text-white font-semibold text-sm shadow-goldglow flex items-center justify-center gap-2 transition-all duration-200">
+                        <a href="{{ route('checkout.index') }}" class="w-full py-4 rounded-full bg-champagne hover:bg-champagne-600 text-white font-semibold text-sm shadow-goldglow flex items-center justify-center gap-2 transition-all duration-200">
                             <span>Lanjutkan ke Checkout</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>

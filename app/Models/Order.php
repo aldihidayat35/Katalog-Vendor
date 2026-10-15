@@ -21,7 +21,6 @@ class Order extends Model
         'event_date',
         'shipping_address',
         'shipping_method',
-        'payment_option',
         'promo_id',
         'promo_code',
         'subtotal',
@@ -73,43 +72,17 @@ class Order extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'lead' => $this->is_dp ? 'Menunggu Konfirmasi DP' : 'Menunggu Follow-up (Lead)',
+            'lead' => 'Menunggu Follow-up (Lead)',
             'contacted' => 'Sudah Dihubungi',
-            'confirmed' => $this->is_dp ? 'DP Diterima (Dalam Produksi)' : 'Dikonfirmasi (Lunas)',
-            'completed' => $this->is_dp ? 'Lunas & Selesai' : 'Pesanan Selesai',
+            'confirmed' => 'Dikonfirmasi / Dalam Produksi',
+            'completed' => 'Pesanan Selesai',
             'cancelled' => 'Dibatalkan',
             default => ucfirst($this->status),
         };
     }
 
-    public function getIsDpAttribute(): bool
-    {
-        return $this->payment_option === 'dp';
-    }
-
-    public function getPaymentLabelAttribute(): string
-    {
-        $dpPercent = setting('dp_percentage', 50);
-
-        return $this->is_dp ? "Uang Muka (DP {$dpPercent}%)" : 'Full Payment (Lunas)';
-    }
-
     public function getOriginalTotalAttribute(): int
     {
         return max(0, (int) $this->subtotal - (int) $this->discount_total);
-    }
-
-    public function getDpAmountAttribute(): int
-    {
-        return $this->is_dp ? (int) $this->total_price : 0;
-    }
-
-    public function getRemainingBalanceAttribute(): int
-    {
-        if (! $this->is_dp) {
-            return 0;
-        }
-
-        return max(0, $this->original_total - (int) $this->total_price);
     }
 }

@@ -309,6 +309,73 @@
             </div>
         </div>
 
+        <!-- 4. PENGATURAN SEO & WEBMASTER GOOGLE -->
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200/80 shadow-subtle space-y-6">
+            <div>
+                <h3 class="text-lg font-serif font-bold text-charcoal-900 border-b border-stone-100 pb-3">
+                    4. Pengaturan SEO &amp; Webmaster Google
+                </h3>
+                <p class="text-xs text-stone-500 mt-1">Konfigurasi kata kunci, deskripsi pencarian Google, dan verifikasi Google Search Console agar website mudah ditemukan pembeli di seluruh Indonesia.</p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Google Site Verification -->
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+                        Kode Verifikasi Google Search Console (HTML Tag)
+                    </label>
+                    <input
+                        type="text"
+                        name="google_site_verification"
+                        value="{{ old('google_site_verification', $settings['google_site_verification']) }}"
+                        placeholder="Contoh: abcd1234efgh5678ijkl atau google-site-verification=..."
+                        class="w-full text-sm font-mono rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
+                    >
+                    <span class="text-[11px] text-stone-400 mt-1 block">
+                        Masukkan kode dari metode verifikasi "HTML Tag" Google Search Console. Otomatis disematkan di tag &lt;meta name="google-site-verification"&gt;.
+                    </span>
+                    @error('google_site_verification')
+                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Meta Keywords -->
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+                        Kata Kunci Utama (SEO Meta Keywords)
+                    </label>
+                    <input
+                        type="text"
+                        name="seo_meta_keywords"
+                        value="{{ old('seo_meta_keywords', $settings['seo_meta_keywords']) }}"
+                        placeholder="undangan pernikahan, vendor undangan, cetak undangan mewah..."
+                        class="w-full text-sm rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
+                    >
+                    <span class="text-[11px] text-stone-400 mt-1 block">Pisahkan beberapa kata kunci dengan tanda koma (,).</span>
+                    @error('seo_meta_keywords')
+                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Meta Description -->
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+                        Deskripsi Cuplikan Google (SEO Meta Description Default)
+                    </label>
+                    <textarea
+                        name="seo_meta_description"
+                        rows="3"
+                        class="w-full text-sm rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
+                        placeholder="Tulis deskripsi rangkuman bisnis Anda (disarankan 120-160 karakter)..."
+                    >{{ old('seo_meta_description', $settings['seo_meta_description']) }}</textarea>
+                    <span class="text-[11px] text-stone-400 mt-1 block">Deskripsi ini akan tampil di bawah judul pada hasil pencarian Google jika halaman tidak memiliki deskripsi spesifik.</span>
+                    @error('seo_meta_description')
+                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         <!-- Form Submit Bar -->
         <div class="flex items-center justify-end gap-4 pt-4">
             <x-button type="submit" variant="primary" size="lg">

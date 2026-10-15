@@ -112,7 +112,7 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-stone-500 mt-0.5">
-                                        Harga Satuan: {{ rupiah($item->unit_price) }} &bull; DP: {{ rupiah($item->dp_price) }}
+                                        Harga Satuan: {{ rupiah($item->unit_price) }}
                                     </p>
                                 </div>
                             </div>
@@ -149,24 +149,8 @@
                         </div>
                     @endif
 
-                    @if ($order->is_dp)
-                        <div class="p-3.5 rounded-xl bg-champagne-50 border border-champagne-200/80 space-y-1.5 my-2">
-                            <div class="flex justify-between text-xs">
-                                <span class="font-semibold text-charcoal-900">Uang Muka (DP 50%):</span>
-                                <span class="font-bold text-champagne-800">{{ rupiah($order->dp_amount) }}</span>
-                            </div>
-                            <div class="flex justify-between text-xs text-stone-600">
-                                <span>Sisa Tagihan Pelunasan:</span>
-                                <span class="font-bold text-rose-700">{{ rupiah($order->remaining_balance) }}</span>
-                            </div>
-                            <p class="text-[11px] text-stone-500 pt-1 leading-snug">
-                                ℹ️ Customer membayar DP 50% saat checkout. Tagihkan sisa pelunasan saat sampel desain selesai disetujui sebelum pengiriman.
-                            </p>
-                        </div>
-                    @endif
-
                     <div class="flex justify-between text-base font-bold text-charcoal-900 pt-2 border-t border-stone-100">
-                        <span>{{ $order->is_dp ? 'Total Tagihan DP (50%)' : 'Total Pembayaran (Lunas)' }}</span>
+                        <span>Total Nilai Pesanan</span>
                         <span class="text-champagne-700">{{ rupiah($order->total_price) }}</span>
                     </div>
                 </div>
@@ -227,10 +211,10 @@
                         </div>
 
                         <select name="status" required class="w-full text-sm rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500">
-                            <option value="lead" @selected($order->status === 'lead')>Lead Baru (Belum Dihubungi / Menunggu DP)</option>
+                            <option value="lead" @selected($order->status === 'lead')>Lead Baru (Menunggu Follow-up)</option>
                             <option value="contacted" @selected($order->status === 'contacted')>Sudah Dihubungi (Follow-up Desain/Data)</option>
-                            <option value="confirmed" @selected($order->status === 'confirmed')>Dikonfirmasi ({{ $order->is_dp ? 'DP 50% Diterima / Dalam Produksi' : 'Lunas Diterima / Dalam Produksi' }})</option>
-                            <option value="completed" @selected($order->status === 'completed')>Selesai ({{ $order->is_dp ? 'Pelunasan Diterima & Pesanan Dikirim' : 'Undangan Dikirim/Diserahkan' }})</option>
+                            <option value="confirmed" @selected($order->status === 'confirmed')>Dikonfirmasi / Dalam Produksi</option>
+                            <option value="completed" @selected($order->status === 'completed')>Pesanan Selesai</option>
                             <option value="cancelled" @selected($order->status === 'cancelled')>Dibatalkan</option>
                         </select>
                         @error('status')

@@ -38,11 +38,10 @@ Route::get('/contact', fn () => redirect()->route('contact'));
 Route::get('/sitemap.xml', function () {
     $products = Product::active()
         ->whereHas('category', fn ($q) => $q->where('is_active', true))
-        ->select(['slug', 'updated_at'])
+        ->with('images')
         ->get();
 
     $categories = Category::active()
-        ->select(['slug', 'updated_at'])
         ->get();
 
     $content = view('sitemap', compact('products', 'categories'))->render();
@@ -51,6 +50,16 @@ Route::get('/sitemap.xml', function () {
         'Content-Type' => 'application/xml; charset=UTF-8',
     ]);
 })->name('sitemap');
+
+// Dynamic robots.txt SEO
+Route::get('/robots.txt', function () {
+    $sitemapUrl = url('/sitemap.xml');
+    $content = "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /checkout\nDisallow: /keranjang\nDisallow: /pesanan-saya\nDisallow: /profile\nDisallow: /profil\nDisallow: /login\nDisallow: /register\n\nSitemap: {$sitemapUrl}\n";
+
+    return response($content, 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+    ]);
+});
 
 // Helper route for guest add-to-cart prompt
 Route::get('/keranjang/masuk', function (Request $request) {

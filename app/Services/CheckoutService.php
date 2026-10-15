@@ -58,38 +58,25 @@ class CheckoutService
 
             // 2. Server-side price & promo recalculation
             $subtotal = 0;
-            $dpSubtotal = 0;
-            $dpPercentage = (float) setting('dp_percentage', 50);
             $itemCalculations = [];
 
             foreach ($cartItems as $item) {
                 $unitPrice = (int) $item->product->getUnitPriceForQuantity($item->quantity);
-                $rawDpPrice = (int) $item->product->getDpPriceForQuantity($item->quantity);
-
-                $unitDp = ($rawDpPrice > 0 && $rawDpPrice <= $unitPrice)
-                    ? $rawDpPrice
-                    : (int) round(($unitPrice * $dpPercentage) / 100);
 
                 $itemCalculations[$item->id] = [
                     'unit_price' => $unitPrice,
-                    'dp_price' => $unitDp,
                     'subtotal' => (int) ($unitPrice * $item->quantity),
                 ];
 
                 $subtotal += ($unitPrice * $item->quantity);
-                $dpSubtotal += ($unitDp * $item->quantity);
             }
-
-            $paymentOption = in_array($data['payment_option'] ?? 'full', ['dp', 'full'])
-                ? $data['payment_option']
-                : 'full';
 
             $promoCode = session('applied_promo_code');
             $promoId = null;
             $appliedPromoCode = null;
             $discountTotal = 0;
 
-            if ($paymentOption === 'full' && ! empty($promoCode)) {
+            if (! empty($promoCode)) {
                 $promoResult = $this->promoService->validatePromo($promoCode, $subtotal);
 
                 if (! $promoResult['valid']) {
@@ -104,10 +91,7 @@ class CheckoutService
                 $appliedPromoCode = $promoResult['promo']?->code;
             }
 
-            $totalPrice = match ($paymentOption) {
-                'dp' => $dpSubtotal,
-                default => max(0, $subtotal - $discountTotal),
-            };
+            $totalPrice = max(0, $subtotal - $discountTotal);
 
             // 3. Generate unique sequential daily order number (e.g. INV-20261010-0001)
             $today = date('Ymd');
@@ -136,7 +120,6 @@ class CheckoutService
                 'event_date' => $data['event_date'],
                 'shipping_address' => $data['shipping_address'],
                 'shipping_method' => $data['shipping_method'],
-                'payment_option' => $paymentOption,
                 'promo_id' => $promoId,
                 'promo_code' => $appliedPromoCode,
                 'subtotal' => $subtotal,
@@ -151,7 +134,6 @@ class CheckoutService
             foreach ($cartItems as $item) {
                 $calc = $itemCalculations[$item->id] ?? [
                     'unit_price' => (int) $item->product->final_price,
-                    'dp_price' => (int) round(((int) $item->product->final_price * $dpPercentage) / 100),
                     'subtotal' => (int) ($item->product->final_price * $item->quantity),
                 ];
 
@@ -159,7 +141,6 @@ class CheckoutService
                     'product_id' => $item->product_id,
                     'product_name' => $item->product->name,
                     'unit_price' => $calc['unit_price'],
-                    'dp_price' => $calc['dp_price'],
                     'quantity' => $item->quantity,
                     'subtotal' => $calc['subtotal'],
                 ]);

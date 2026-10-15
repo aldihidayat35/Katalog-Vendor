@@ -21,8 +21,6 @@ class WhatsAppMessageBuilder
             ? '@'.ltrim($order->instagram_account, '@')
             : '-';
 
-        $paymentLabel = $order->payment_option === 'dp' ? 'DP' : 'Full Payment';
-
         $lines = [];
         $lines[] = "Halo Admin {$siteName}, saya ingin memesan undangan 🙏";
         $lines[] = '';
@@ -58,11 +56,8 @@ class WhatsAppMessageBuilder
             $lines[] = "Diskon ({$order->promo_code}): -Rp ".number_format($order->discount_total, 0, ',', '.');
         }
 
-        $lines[] = "*Total {$paymentLabel}: Rp ".number_format($order->total_price, 0, ',', '.').'*';
-
-        if ($order->payment_option === 'dp' && $order->remaining_balance > 0) {
-            $lines[] = 'Sisa Pelunasan: Rp '.number_format($order->remaining_balance, 0, ',', '.').' (dilunasi saat pesanan selesai)';
-        }
+        $lines[] = '*Total Pesanan: Rp '.number_format($order->total_price, 0, ',', '.').'*';
+        $lines[] = 'Catatan Pembayaran: Opsi pembayaran DP / termin dapat dibicarakan langsung 🙏';
 
         $lines[] = '';
         $lines[] = '*PENGIRIMAN*';

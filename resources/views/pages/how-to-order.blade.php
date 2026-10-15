@@ -1,5 +1,35 @@
-<x-app-layout>
-    <x-slot:title>Panduan Cara Pesan - {{ setting('site_name', 'Galeria Invitation') }}</x-slot:title>
+<x-app-layout 
+    title="Panduan Cara Pemesanan Undangan Mudah dan Cepat"
+    description="Panduan 3 langkah mudah memesan undangan pernikahan mewah, mulai dari pemilihan katalog, konsultasi preview via WhatsApp, hingga pengiriman aman ke seluruh Indonesia."
+    keywords="cara pesan undangan, alur pemesanan undangan, order undangan online, konsultasi undangan pernikahan"
+    :canonicalUrl="route('how-to-order')"
+>
+    <!-- Schema.org BreadcrumbList -->
+    @push('schema')
+    @php
+        $orderBreadcrumbs = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => 'Beranda',
+                    'item' => route('home'),
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 2,
+                    'name' => 'Cara Pemesanan',
+                    'item' => route('how-to-order'),
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/ld+json">
+    {!! json_encode($orderBreadcrumbs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    @endpush
 
     <!-- Header Banner -->
     <div class="bg-charcoal text-white py-12 sm:py-16 border-b border-champagne-500/30">
@@ -44,7 +74,7 @@
                     <span class="text-xs uppercase font-bold tracking-widest text-champagne-700">Langkah Kedua</span>
                     <h2 class="text-xl sm:text-2xl font-serif font-bold text-charcoal-900">Tentukan Jumlah &amp; Tambah ke Keranjang</h2>
                     <p class="text-sm text-stone-600 leading-relaxed">
-                        Tentukan jumlah undangan (minimal 100 pcs untuk undangan cetak, atau 1 untuk undangan digital). Pilih opsi pembayaran Uang Muka (DP) untuk booking antrean, atau Full Payment. Klik tombol <strong>Tambahkan ke Keranjang</strong>.
+                        Tentukan jumlah undangan (minimal 100 pcs untuk undangan cetak, atau 1 untuk undangan digital). Anda juga dapat menegosiasikan opsi pembayaran Uang Muka (DP) atau termin langsung bersama admin di WhatsApp. Klik tombol <strong>Tambahkan ke Keranjang</strong>.
                     </p>
                 </div>
             </div>

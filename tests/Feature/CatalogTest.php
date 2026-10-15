@@ -136,7 +136,6 @@ class CatalogTest extends TestCase
             'slug' => 'amora-foil-suite',
             'price' => 7000,
             'discount_price' => 6000,
-            'dp_price' => 300000,
             'description' => 'Detail isi paket lengkap dengan amplop vellum.',
             'specifications' => 'Kertas Aster 230 gsm foil emas.',
             'is_active' => true,
@@ -148,7 +147,7 @@ class CatalogTest extends TestCase
         $response->assertSee('Amora Foil Suite');
         $response->assertSee('Silver Deluxe');
         $response->assertSee('Rp 6.000');
-        $response->assertSee('Rp 300.000');
+        $response->assertSee('Negosiasi DP');
         $response->assertSee('Detail isi paket lengkap dengan amplop vellum.');
         $response->assertSee('Kertas Aster 230 gsm foil emas.');
         $response->assertSee('Chat Admin');

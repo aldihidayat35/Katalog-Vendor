@@ -39,6 +39,9 @@ class SettingController extends Controller
             'instagram_url' => setting('instagram_url', 'https://instagram.com/galeria.invitation'),
             'consultation_message' => setting('consultation_message', 'Halo Admin Galeria Invitation, saya tertarik untuk konsultasi desain undangan pernikahan saya. Mohon informasi katalog dan ketersediaan jadwal ya.'),
             'shipping_methods' => $shippingMethods,
+            'google_site_verification' => setting('google_site_verification', ''),
+            'seo_meta_keywords' => setting('seo_meta_keywords', 'undangan pernikahan, vendor undangan pernikahan, cetak undangan mewah, undangan elegan, undangan pernikahan eksklusif, undangan online, cetak undangan pernikahan indonesia'),
+            'seo_meta_description' => setting('seo_meta_description', 'Vendor percetakan dan spesialis undangan pernikahan mewah, elegan, dan eksklusif. Menyediakan undangan cetak fisik berkualitas premium serta undangan digital interaktif untuk pengiriman ke seluruh Indonesia.'),
         ];
 
         return view('admin.settings.index', compact('settings'));

@@ -1,9 +1,12 @@
 User-agent: *
+Allow: /
 Disallow: /admin/
 Disallow: /checkout
 Disallow: /keranjang
 Disallow: /pesanan-saya
 Disallow: /profile
 Disallow: /profil
+Disallow: /login
+Disallow: /register
 
 Sitemap: /sitemap.xml

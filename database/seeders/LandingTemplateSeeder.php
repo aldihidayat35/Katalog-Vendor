@@ -220,7 +220,6 @@ class LandingTemplateSeeder extends Seeder
                     'specifications' => "• Format: Undangan Digital Interaktif & Mobile Responsive\n• Fitur: Musik Latar, Hitung Mundur Acara, Navigasi Peta Google, Konfirmasi RSVP WhatsApp\n• Durasi Aktif: Selamanya (Lifetime Access)\n• Waktu Pengerjaan: 1 - 2 hari kerja",
                     'price' => $pData['price'],
                     'discount_price' => $pData['discount_price'],
-                    'dp_price' => (int) ($pData['price'] * 0.5),
                     'type' => $pData['type'],
                     'badge' => $pData['badge'],
                     'is_featured' => $pData['is_featured'],

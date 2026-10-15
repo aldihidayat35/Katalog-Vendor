@@ -22,17 +22,10 @@ class CartController extends Controller
      */
     public function index(Request $request): View
     {
-        $paymentOption = $request->query('payment_option', session('checkout_payment_option', 'full'));
-        if (! in_array($paymentOption, ['dp', 'full'])) {
-            $paymentOption = 'full';
-        }
-
-        session(['checkout_payment_option' => $paymentOption]);
-
         $promoCode = session('applied_promo_code');
-        $summary = $this->cartService->getSummary(auth()->user(), $paymentOption, $promoCode);
+        $summary = $this->cartService->getSummary(auth()->user(), $promoCode);
 
-        return view('cart.index', compact('summary', 'paymentOption'));
+        return view('cart.index', compact('summary'));
     }
 
     /**
@@ -76,8 +69,7 @@ class CartController extends Controller
         $this->cartService->update(auth()->user(), $cart, (int) $validated['quantity']);
 
         if ($request->expectsJson() || $request->ajax()) {
-            $paymentOption = session('checkout_payment_option', 'full');
-            $summary = $this->cartService->getSummary(auth()->user(), $paymentOption, session('applied_promo_code'));
+            $summary = $this->cartService->getSummary(auth()->user(), session('applied_promo_code'));
             $cartCount = (int) auth()->user()->carts()->sum('quantity');
 
             return response()->json([

@@ -253,7 +253,6 @@
                 <x-slot:header>
                     <th class="px-5 py-3">No. Pesanan</th>
                     <th class="px-5 py-3">Customer</th>
-                    <th class="px-5 py-3">Opsi</th>
                     <th class="px-5 py-3">Total</th>
                     <th class="px-5 py-3">Status</th>
                     <th class="px-5 py-3 text-right">Aksi</th>
@@ -268,11 +267,6 @@
                         <td class="px-5 py-4">
                             <span class="font-medium text-charcoal-900 block">{{ $lead->customer_name }}</span>
                             <span class="text-xs text-stone-500 block">{{ $lead->customer_phone }}</span>
-                        </td>
-                        <td class="px-5 py-4">
-                            <span class="text-xs uppercase font-semibold px-2 py-0.5 rounded bg-stone-100 text-stone-700">
-                                {{ $lead->payment_option }}
-                            </span>
                         </td>
                         <td class="px-5 py-4 font-semibold text-charcoal-900">
                             {{ rupiah($lead->total_price) }}

@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ProductRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Services\ImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -93,7 +94,7 @@ class ProductController extends Controller
                 $primaryIndex = (int) $request->input('primary_image_index', 0);
 
                 foreach ($request->file('images') as $index => $file) {
-                    $path = $file->store('products', 'public');
+                    $path = ImageService::storeAsWebp($file, 'products', 1200);
 
                     ProductImage::create([
                         'product_id' => $product->id,
@@ -159,7 +160,7 @@ class ProductController extends Controller
                 $hasPrimary = $product->images()->where('is_primary', true)->exists();
 
                 foreach ($request->file('images') as $i => $file) {
-                    $path = $file->store('products', 'public');
+                    $path = ImageService::storeAsWebp($file, 'products', 1200);
                     $isPrimary = (! $hasPrimary && $i === 0);
 
                     ProductImage::create([

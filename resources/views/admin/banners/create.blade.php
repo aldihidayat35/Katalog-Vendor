@@ -65,7 +65,7 @@
 
             <!-- Image Upload -->
             <div>
-                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Gambar Banner <span class="text-rose-500">*</span> (Rasio landscape disarankan ~ 16:9 atau 21:9, maks 2 MB)</label>
+                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Gambar Banner <span class="text-rose-500">*</span> (Rasio landscape disarankan ~ 16:9 atau 21:9, maks 10 MB &bull; Otomatis WebP)</label>
                 <input
                     type="file"
                     name="image"

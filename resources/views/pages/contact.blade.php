@@ -1,5 +1,35 @@
-<x-app-layout>
-    <x-slot:title>Hubungi Kami - {{ setting('site_name', 'Galeria Invitation') }}</x-slot:title>
+<x-app-layout 
+    title="Hubungi dan Konsultasi Desain Undangan Pernikahan"
+    description="Hubungi customer service dan tim desainer kami via WhatsApp atau Email untuk konsultasi desain kustom, sampel fisik, harga grosir, dan pengiriman ke seluruh Indonesia."
+    keywords="kontak vendor undangan, konsultasi undangan pernikahan, whatsapp customer service undangan, alamat percetakan undangan"
+    :canonicalUrl="route('contact')"
+>
+    <!-- Schema.org BreadcrumbList -->
+    @push('schema')
+    @php
+        $contactBreadcrumbs = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => 'Beranda',
+                    'item' => route('home'),
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 2,
+                    'name' => 'Hubungi Kami',
+                    'item' => route('contact'),
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/ld+json">
+    {!! json_encode($contactBreadcrumbs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    @endpush
 
     <!-- Header Banner -->
     <div class="bg-charcoal text-white py-12 sm:py-16 border-b border-champagne-500/30">

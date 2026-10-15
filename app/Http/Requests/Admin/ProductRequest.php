@@ -45,14 +45,13 @@ class ProductRequest extends FormRequest
             'specifications' => ['nullable', 'string'],
             'price' => ['required', 'integer', 'min:0'],
             'discount_price' => ['nullable', 'integer', 'min:0', 'lt:price'],
-            'dp_price' => ['required', 'integer', 'min:0'],
             'min_order' => ['required', 'integer', 'min:1'],
             'badge' => ['nullable', 'string', 'max:50'],
             'stock_status' => ['required', 'in:ready,preorder,out_of_stock'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'images' => ['nullable', 'array'],
-            'images.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'images.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'primary_image_index' => ['nullable', 'integer', 'min:0'],
             'tiers' => ['nullable', 'array'],
             'tiers.*.min_quantity' => ['nullable', 'integer', 'min:1'],
@@ -67,17 +66,6 @@ class ProductRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $price = (int) $this->input('price', 0);
-            $discountPrice = $this->filled('discount_price') && (int) $this->input('discount_price') > 0
-                ? (int) $this->input('discount_price')
-                : null;
-            $finalPrice = $discountPrice ?? $price;
-            $dpPrice = (int) $this->input('dp_price', 0);
-
-            if ($dpPrice > $finalPrice) {
-                $validator->errors()->add('dp_price', 'Harga DP ('.rupiah($dpPrice).') tidak boleh melebihi harga final produk ('.rupiah($finalPrice).').');
-            }
-
             if ($this->has('tiers') && is_array($this->input('tiers'))) {
                 foreach ($this->input('tiers') as $idx => $tier) {
                     $min = isset($tier['min_quantity']) && $tier['min_quantity'] !== '' ? (int) $tier['min_quantity'] : null;
@@ -115,13 +103,11 @@ class ProductRequest extends FormRequest
             'price.min' => 'Harga produk minimal Rp 0.',
             'discount_price.lt' => 'Harga diskon harus lebih kecil dari harga normal.',
             'discount_price.integer' => 'Harga diskon harus berupa angka bulat.',
-            'dp_price.required' => 'Harga DP produk wajib diisi.',
-            'dp_price.integer' => 'Harga DP harus berupa angka bulat.',
             'min_order.required' => 'Minimal pemesanan wajib diisi.',
             'min_order.min' => 'Minimal pemesanan minimal 1.',
             'stock_status.required' => 'Status stok wajib dipilih.',
             'images.*.mimes' => 'Format gambar harus berupa JPG, JPEG, PNG, atau WEBP.',
-            'images.*.max' => 'Ukuran gambar maksimal 2 MB per file.',
+            'images.*.max' => 'Ukuran gambar maksimal 10 MB per file.',
         ];
     }
 }

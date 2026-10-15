@@ -15,7 +15,6 @@ class OrderItem extends Model
         'product_id',
         'product_name',
         'unit_price',
-        'dp_price',
         'quantity',
         'subtotal',
     ];
@@ -24,7 +23,6 @@ class OrderItem extends Model
     {
         return [
             'unit_price' => 'integer',
-            'dp_price' => 'integer',
             'quantity' => 'integer',
             'subtotal' => 'integer',
         ];

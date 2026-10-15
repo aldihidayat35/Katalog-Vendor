@@ -23,7 +23,6 @@ class OrderFactory extends Factory
             'event_date' => fake()->dateTimeBetween('+1 week', '+6 months'),
             'shipping_address' => fake()->address(),
             'shipping_method' => 'JNE Reguler / YES',
-            'payment_option' => 'full',
             'promo_id' => null,
             'promo_code' => null,
             'subtotal' => 1500000,

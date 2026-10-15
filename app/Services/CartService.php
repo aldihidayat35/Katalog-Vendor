@@ -133,70 +133,53 @@ class CartService
     }
 
     /**
-     * Compute summary (subtotal, DP subtotal, promo discount, total).
+     * Compute summary (subtotal, promo discount, total).
      */
-    public function getSummary(User $user, string $paymentOption = 'full', ?string $promoCode = null): array
+    public function getSummary(User $user, ?string $promoOrPayment = null, ?string $promoCode = null): array
     {
+        // Support both getSummary($user, $promoCode) and legacy getSummary($user, $paymentOption, $promoCode)
+        $actualPromo = $promoCode;
+        if ($actualPromo === null && ! in_array($promoOrPayment, ['full', 'dp'], true)) {
+            $actualPromo = $promoOrPayment;
+        }
+
         $items = $this->getItems($user);
 
         $subtotal = 0;
-        $dpSubtotal = 0;
         $totalItems = 0;
-        $dpPercentage = (float) setting('dp_percentage', 50);
 
         foreach ($items as $item) {
             $unitPrice = (int) $item->product->getUnitPriceForQuantity($item->quantity);
-            $rawDpPrice = (int) $item->product->getDpPriceForQuantity($item->quantity);
-
-            // Per-unit DP: If product has custom dp_price <= unitPrice, use it.
-            // Otherwise, calculate standard 50% (dp_percentage) of unit price.
-            $unitDp = ($rawDpPrice > 0 && $rawDpPrice <= $unitPrice)
-                ? $rawDpPrice
-                : (int) round(($unitPrice * $dpPercentage) / 100);
 
             $item->unit_price = $unitPrice;
             $item->is_wholesale = $item->product->isWholesaleForQuantity($item->quantity);
             $item->active_tier = $item->product->getTierForQuantity($item->quantity);
             $item->item_subtotal = $unitPrice * $item->quantity;
             $item->subtotal = $unitPrice * $item->quantity;
-            $item->unit_dp = $unitDp;
-            $item->dp_subtotal = $unitDp * $item->quantity;
 
             $subtotal += ($unitPrice * $item->quantity);
-            $dpSubtotal += ($unitDp * $item->quantity);
             $totalItems += $item->quantity;
         }
 
-        // Promo calculation (only applies to Full Payment)
+        // Promo calculation applies directly to all orders
         $promoResult = null;
         $discount = 0;
 
-        if (! empty($promoCode) && $subtotal > 0) {
-            $promoResult = $this->promoService->validatePromo($promoCode, $subtotal);
-            if ($promoResult['valid'] && $paymentOption === 'full') {
-                $discount = $promoResult['discount'];
+        if (! empty($actualPromo) && $subtotal > 0) {
+            $promoResult = $this->promoService->validatePromo($actualPromo, $subtotal);
+            if ($promoResult['valid']) {
+                $discount = (int) $promoResult['discount'];
             }
         }
 
-        $totalPrice = match ($paymentOption) {
-            'dp' => $dpSubtotal,
-            default => max(0, $subtotal - $discount),
-        };
-
-        $remainingBalance = match ($paymentOption) {
-            'dp' => max(0, $subtotal - $dpSubtotal),
-            default => 0,
-        };
+        $totalPrice = max(0, $subtotal - $discount);
 
         return [
             'items' => $items,
             'item_count' => $items->count(),
             'total_quantity' => $totalItems,
             'subtotal' => $subtotal,
-            'dp_subtotal' => $dpSubtotal,
-            'remaining_balance' => $remainingBalance,
             'discount' => $discount,
-            'payment_option' => $paymentOption,
             'total' => $totalPrice,
             'promo' => $promoResult,
         ];

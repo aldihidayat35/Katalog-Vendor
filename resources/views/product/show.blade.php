@@ -1,14 +1,83 @@
-<x-app-layout>
-    <x-slot:title>{{ $product->name }} - {{ setting('site_name', 'Galeria Invitation') }}</x-slot:title>
+@php
+    $productCleanDesc = Str::limit(strip_tags($product->short_description ?? $product->description), 160);
+    $productKeywords = "undangan {$product->name}, cetak undangan {$product->category->name}, undangan pernikahan mewah, undangan pernikahan online, {$product->slug}";
+    $productCanonical = route('product.show', $product->slug);
+    $productOgImage = $product->primary_image_url;
+    $productBreadcrumbSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => [
+            [
+                '@type' => 'ListItem',
+                'position' => 1,
+                'name' => 'Beranda',
+                'item' => route('home'),
+            ],
+            [
+                '@type' => 'ListItem',
+                'position' => 2,
+                'name' => 'Katalog',
+                'item' => route('catalog.index'),
+            ],
+            [
+                '@type' => 'ListItem',
+                'position' => 3,
+                'name' => $product->category->name,
+                'item' => route('catalog.index', ['kategori' => $product->category->slug]),
+            ],
+            [
+                '@type' => 'ListItem',
+                'position' => 4,
+                'name' => $product->name,
+                'item' => route('product.show', $product->slug),
+            ],
+        ],
+    ];
 
-    <!-- SEO & Open Graph Meta Tags -->
-    @push('seo')
-        <meta name="description" content="{{ Str::limit(strip_tags($product->short_description ?? $product->description), 160) }}">
-        <meta property="og:title" content="{{ $product->name }} - {{ setting('site_name', 'Galeria Invitation') }}">
-        <meta property="og:description" content="{{ Str::limit(strip_tags($product->short_description ?? $product->description), 160) }}">
-        <meta property="og:image" content="{{ $product->primary_image_url }}">
-        <meta property="og:url" content="{{ url()->current() }}">
-        <meta property="og:type" content="product">
+    $productSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'image' => [$product->primary_image_url],
+        'description' => $productCleanDesc,
+        'sku' => 'INV-' . $product->id,
+        'category' => $product->category->name,
+        'brand' => [
+            '@type' => 'Brand',
+            'name' => setting('site_name', 'Galeria Invitation'),
+        ],
+        'offers' => [
+            '@type' => 'Offer',
+            'url' => route('product.show', $product->slug),
+            'priceCurrency' => 'IDR',
+            'price' => (string) $product->final_price,
+            'priceValidUntil' => now()->addYear()->format('Y-12-31'),
+            'itemCondition' => 'https://schema.org/NewCondition',
+            'availability' => $product->stock_status === 'out_of_stock' ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+            'seller' => [
+                '@type' => 'Organization',
+                'name' => setting('site_name', 'Galeria Invitation'),
+            ],
+        ],
+    ];
+@endphp
+
+<x-app-layout 
+    :title="$product->name . ' - Undangan Pernikahan'"
+    :description="$productCleanDesc"
+    :keywords="$productKeywords"
+    :canonicalUrl="$productCanonical"
+    :ogImage="$productOgImage"
+    ogType="product"
+>
+    <!-- Schema.org BreadcrumbList & Product Structured Data -->
+    @push('schema')
+    <script type="application/ld+json">
+    {!! json_encode($productBreadcrumbSchema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    <script type="application/ld+json">
+    {!! json_encode($productSchema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
     @endpush
 
     <!-- Breadcrumb -->
@@ -35,10 +104,7 @@
                 qty: {{ max(1, (int)$product->min_order) }},
                 minQty: {{ max(1, (int)$product->min_order) }},
                 baseUnitPrice: {{ $product->final_price }},
-                baseDpPrice: {{ $product->dp_price }},
-                dpPercentage: {{ (float) setting('dp_percentage', 50) }},
                 tiers: @json($product->priceTiers->sortBy('min_quantity')->values()),
-                paymentOption: 'dp',
                 lightboxOpen: false,
                 lightboxImage: '',
                 activeTab: 'package',
@@ -64,13 +130,6 @@
                         return Number(sorted[0].unit_price);
                     }
                     return this.baseUnitPrice;
-                },
-
-                get dpUnitPrice() {
-                    if (this.isWholesaleActive) {
-                        return Math.round((this.unitPrice * this.dpPercentage) / 100);
-                    }
-                    return this.baseDpPrice;
                 },
 
                 get isWholesaleActive() {
@@ -369,40 +428,12 @@
                             </div>
                         @endif
 
-                        <!-- Skema Opsi Pembayaran DP vs Full Payment -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-champagne-200/80">
-                            <!-- Opsi DP Card -->
-                            <div
-                                @click="paymentOption = 'dp'"
-                                :class="paymentOption === 'dp' ? 'border-champagne bg-white ring-2 ring-champagne-400' : 'border-stone-200 bg-stone-50/70 hover:bg-white'"
-                                class="p-3.5 rounded-2xl border cursor-pointer transition-all duration-200"
-                            >
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-charcoal-900">Uang Muka (DP 50%)</span>
-                                    <span class="text-xs font-semibold text-champagne-700">
-                                        <span x-text="formatRupiah(dpUnitPrice * qty)"></span>
-                                    </span>
-                                </div>
-                                <p class="text-[11px] text-stone-500 mt-1 leading-snug">
-                                    <span x-text="formatRupiah(dpUnitPrice)"></span> / pcs. Cukup bayar DP untuk mengunci slot antrian dan memulai pembuatan draft desain.
-                                </p>
-                            </div>
-
-                            <!-- Opsi Full Payment Card -->
-                            <div
-                                @click="paymentOption = 'full'"
-                                :class="paymentOption === 'full' ? 'border-champagne bg-white ring-2 ring-champagne-400' : 'border-stone-200 bg-stone-50/70 hover:bg-white'"
-                                class="p-3.5 rounded-2xl border cursor-pointer transition-all duration-200"
-                            >
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-charcoal-900">Full Payment</span>
-                                    <span class="text-xs font-semibold text-champagne-700">
-                                        <span x-text="formatRupiah(unitPrice * qty)"></span>
-                                    </span>
-                                </div>
-                                <p class="text-[11px] text-stone-500 mt-1 leading-snug">
-                                    Pelunasan langsung di awal pesanan untuk proses cetak tanpa jeda konfirmasi tambahan.
-                                </p>
+                        <!-- Info Opsi Negosiasi DP via WhatsApp -->
+                        <div class="p-3.5 rounded-2xl bg-champagne-50/70 border border-champagne-200/80 flex items-start gap-2.5">
+                            <span class="text-base shrink-0 mt-0.5">💬</span>
+                            <div class="text-xs text-stone-600 leading-relaxed">
+                                <strong class="text-charcoal-900 block font-semibold mb-0.5">Fleksibilitas Pembayaran DP &amp; Termin</strong>
+                                Ingin pembayaran bertahap (DP)? Skema DP dan termin pelunasan dapat Anda bicarakan langsung dengan admin kami via WhatsApp setelah checkout.
                             </div>
                         </div>
                     </div>
@@ -411,7 +442,6 @@
                     <form action="{{ url('/keranjang') }}" method="POST" class="space-y-6">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
-                        <input type="hidden" name="payment_option" :value="paymentOption">
 
                         <!-- Quantity Stepper Block -->
                         <div>

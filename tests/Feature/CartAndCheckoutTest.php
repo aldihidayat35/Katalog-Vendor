@@ -230,7 +230,7 @@ class CartAndCheckoutTest extends TestCase
             ->assertSessionHas('applied_promo_code', 'DISKON20');
 
         // Check cart summary reflects capped discount
-        $response = $this->actingAs($user)->get('/keranjang?payment_option=full');
+        $response = $this->actingAs($user)->get('/keranjang');
         $response->assertStatus(200);
         $response->assertSee('Hemat Rp 50.000');
     }
@@ -279,7 +279,6 @@ class CartAndCheckoutTest extends TestCase
             'event_date' => Carbon::now()->addMonths(2)->format('Y-m-d'),
             'shipping_address' => 'Jl. Kenanga No. 10, Jakarta Barat',
             'shipping_method' => 'JNE Reguler / YES',
-            'payment_option' => 'full',
             'notes' => 'Tolong cetak draft terlebih dahulu ya',
         ];
 
@@ -294,7 +293,6 @@ class CartAndCheckoutTest extends TestCase
         $this->assertEquals(1200000, $order->subtotal);
         $this->assertEquals(100000, $order->discount_total);
         $this->assertEquals(1100000, $order->total_price);
-        $this->assertEquals('full', $order->payment_option);
 
         // Verify order items snapshot
         $this->assertCount(1, $order->items);
@@ -313,7 +311,8 @@ class CartAndCheckoutTest extends TestCase
         // Verify WhatsApp message content
         $this->assertStringContainsString($order->order_number, $order->whatsapp_message);
         $this->assertStringContainsString('Undangan Rustic Sage', $order->whatsapp_message);
-        $this->assertStringContainsString('Total Full Payment: Rp 1.100.000', $order->whatsapp_message);
+        $this->assertStringContainsString('Total Pesanan: Rp 1.100.000', $order->whatsapp_message);
+        $this->assertStringContainsString('Catatan Pembayaran: Opsi pembayaran DP / termin dapat dibicarakan langsung', $order->whatsapp_message);
 
         // Success page loads
         $this->actingAs($user)->get(route('checkout.success', $order->order_number))
@@ -322,7 +321,7 @@ class CartAndCheckoutTest extends TestCase
             ->assertSee('Data Pesanan Anda Sudah Tersimpan');
     }
 
-    public function test_successful_checkout_dp_payment_calculates_total_as_dp_subtotal_regardless_of_client_input(): void
+    public function test_successful_checkout_calculates_total_server_side_regardless_of_client_input(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['is_active' => true]);
@@ -334,7 +333,6 @@ class CartAndCheckoutTest extends TestCase
             'min_order' => 100,
             'price' => 20000,
             'discount_price' => null, // final = 20.000
-            'dp_price' => 10000,
         ]);
 
         Cart::create([
@@ -343,7 +341,6 @@ class CartAndCheckoutTest extends TestCase
             'quantity' => 100,
         ]);
 
-        // In settings, dp_percentage = 50 -> dp_price = 10.000 per unit -> total DP = 1.000.000
         $checkoutData = [
             'customer_name' => 'Siti Nurhaliza',
             'customer_email' => 'siti@example.com',
@@ -352,7 +349,6 @@ class CartAndCheckoutTest extends TestCase
             'event_date' => Carbon::now()->addMonths(3)->format('Y-m-d'),
             'shipping_address' => 'Jl. Flamboyan No. 25, Bandung',
             'shipping_method' => 'J&T Express',
-            'payment_option' => 'dp',
             'manipulated_price' => 500, // Client tries to spoof total price
         ];
 
@@ -362,16 +358,12 @@ class CartAndCheckoutTest extends TestCase
         $this->assertNotNull($order);
 
         $this->assertEquals(2000000, $order->subtotal); // 100 * 20.000
-        $this->assertEquals(1000000, $order->total_price); // 50% DP
-        $this->assertEquals('dp', $order->payment_option);
-        $this->assertTrue($order->is_dp);
-        $this->assertEquals(1000000, $order->dp_amount);
-        $this->assertEquals(1000000, $order->remaining_balance);
-        $this->assertStringContainsString('Total DP: Rp 1.000.000', $order->whatsapp_message);
-        $this->assertStringContainsString('Sisa Pelunasan: Rp 1.000.000', $order->whatsapp_message);
+        $this->assertEquals(2000000, $order->total_price);
+        $this->assertStringContainsString('Total Pesanan: Rp 2.000.000', $order->whatsapp_message);
+        $this->assertStringContainsString('Catatan Pembayaran: Opsi pembayaran DP / termin dapat dibicarakan langsung', $order->whatsapp_message);
     }
 
-    public function test_cart_summary_correctly_calculates_dp_50_and_remaining_balance_when_requested(): void
+    public function test_cart_summary_and_view_display_subtotal_and_dp_negotiation_info(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['is_active' => true]);
@@ -382,7 +374,6 @@ class CartAndCheckoutTest extends TestCase
             'min_order' => 100,
             'price' => 3000,
             'discount_price' => null,
-            'dp_price' => 1500, // 50%
         ]);
 
         Cart::create([
@@ -391,22 +382,20 @@ class CartAndCheckoutTest extends TestCase
             'quantity' => 100,
         ]);
 
-        $response = $this->actingAs($user)->get('/keranjang?payment_option=dp');
+        $response = $this->actingAs($user)->get('/keranjang');
         $response->assertStatus(200)
-            ->assertSee('Uang Muka (DP 50%)')
-            ->assertSee('Tagihan DP 50% (Bayar Sekarang)')
-            ->assertSee('Sisa Pelunasan Nanti');
+            ->assertSee('Opsi DP / Pembayaran Termin')
+            ->assertSee('Total Pesanan')
+            ->assertSee('Rp 300.000');
 
         $cartService = app(CartService::class);
-        $summary = $cartService->getSummary($user, 'dp');
+        $summary = $cartService->getSummary($user);
 
         $this->assertEquals(300000, $summary['subtotal']);
-        $this->assertEquals(150000, $summary['dp_subtotal']);
-        $this->assertEquals(150000, $summary['remaining_balance']);
-        $this->assertEquals(150000, $summary['total']);
+        $this->assertEquals(300000, $summary['total']);
     }
 
-    public function test_cart_service_safely_calculates_50_percent_dp_when_product_has_package_dp_price(): void
+    public function test_cart_service_correctly_calculates_subtotal_with_discount_price(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['is_active' => true]);
@@ -414,7 +403,6 @@ class CartAndCheckoutTest extends TestCase
             'category_id' => $category->id,
             'price' => 3000,
             'discount_price' => 2000,
-            'dp_price' => 150000, // Legacy/package value > unit price
             'min_order' => 100,
             'is_active' => true,
             'stock_status' => 'ready',
@@ -427,14 +415,11 @@ class CartAndCheckoutTest extends TestCase
         ]);
 
         $cartService = app(CartService::class);
-        $summary = $cartService->getSummary($user, 'dp');
+        $summary = $cartService->getSummary($user);
 
         // Total order = 100 * 2000 = 200.000
-        // DP 50% = 100.000 (NOT 150.000 * 100 = 15.000.000!)
         $this->assertEquals(200000, $summary['subtotal']);
-        $this->assertEquals(100000, $summary['dp_subtotal']);
-        $this->assertEquals(100000, $summary['remaining_balance']);
-        $this->assertEquals(100000, $summary['total']);
+        $this->assertEquals(200000, $summary['total']);
     }
 
     public function test_user_cannot_view_another_users_order(): void
@@ -497,7 +482,6 @@ class CartAndCheckoutTest extends TestCase
             'event_date' => Carbon::now()->addMonths(1)->format('Y-m-d'),
             'shipping_address' => 'Jl. Sudirman No. 45, Kota Pekanbaru, Riau',
             'shipping_method' => 'JNE Reguler / YES',
-            'payment_option' => 'full',
         ];
 
         $this->actingAs($user)->post('/checkout', $checkoutData);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PromotionPopupRequest;
 use App\Models\Setting;
+use App\Services\ImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -52,7 +53,7 @@ class PromotionPopupController extends Controller
                 Storage::disk('public')->delete($oldImage);
             }
 
-            $imagePath = $request->file('popup_image')->store('settings', 'public');
+            $imagePath = ImageService::storeAsWebp($request->file('popup_image'), 'settings', 1200);
             Setting::set('popup_image', $imagePath);
         } elseif ($request->boolean('remove_image')) {
             $oldImage = setting('popup_image');

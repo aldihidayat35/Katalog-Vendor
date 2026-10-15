@@ -22,7 +22,7 @@ class PromotionPopupRequest extends FormRequest
         return [
             'popup_enabled' => ['nullable', 'boolean'],
             'popup_title' => ['required', 'string', 'max:255'],
-            'popup_image' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:4096'],
+            'popup_image' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:10240'],
             'remove_image' => ['nullable', 'boolean'],
             'popup_link_type' => ['required', 'in:catalog,whatsapp,custom'],
             'popup_custom_url' => ['nullable', 'url', 'max:500', 'required_if:popup_link_type,custom'],
@@ -39,7 +39,7 @@ class PromotionPopupRequest extends FormRequest
         return [
             'popup_title.required' => 'Judul / label promosi wajib diisi.',
             'popup_image.mimes' => 'Gambar poster harus berupa format JPG, PNG, WEBP, atau SVG.',
-            'popup_image.max' => 'Ukuran file gambar poster maksimal 4 MB.',
+            'popup_image.max' => 'Ukuran file gambar poster maksimal 10 MB.',
             'popup_link_type.required' => 'Pilihan tipe link tujuan wajib dipilih.',
             'popup_link_type.in' => 'Tipe link tujuan tidak valid.',
             'popup_custom_url.required_if' => 'URL custom tujuan wajib diisi jika memilih tipe Custom Link.',

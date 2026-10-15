@@ -22,7 +22,6 @@
             isSlugManual: false,
             price: {{ old('price', 0) }},
             discountPrice: '{{ old('discount_price', '') }}',
-            dpPrice: {{ old('dp_price', 0) }},
             tiers: {{ json_encode(old('tiers', [])) }},
             addTier() {
                 let lastTier = this.tiers.length > 0 ? this.tiers[this.tiers.length - 1] : null;
@@ -39,10 +38,6 @@
                         .replace(/[\s_-]+/g, '-')
                         .replace(/^-+|-+$/g, '');
                 }
-            },
-            recalculateDp() {
-                let base = (this.discountPrice && parseInt(this.discountPrice) > 0) ? parseInt(this.discountPrice) : parseInt(this.price || 0);
-                this.dpPrice = Math.round(base * 0.5);
             },
             previews: [],
             primaryIndex: 0,
@@ -252,28 +247,6 @@
                     @enderror
                 </div>
 
-                <!-- DP Price -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider">Harga DP per Pcs (Rp) <span class="text-rose-500">*</span></label>
-                        <button type="button" @click="recalculateDp()" class="text-[11px] text-champagne-700 hover:underline">
-                            Hitung 50%
-                        </button>
-                    </div>
-                    <input
-                        type="number"
-                        name="dp_price"
-                        x-model="dpPrice"
-                        value="{{ old('dp_price', 0) }}"
-                        min="0"
-                        required
-                        class="w-full text-sm rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
-                    >
-                    <span class="text-[11px] text-stone-400 mt-1 block">Maksimal sebesar harga final produk</span>
-                    @error('dp_price')
-                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
 
                 <!-- Min Order -->
                 <div>
@@ -453,7 +426,7 @@
             </h3>
 
             <div>
-                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Pilih File Foto (Maks 2 MB per file, format JPG/PNG/WEBP)</label>
+                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Pilih File Foto (Maks 10 MB per file &bull; Otomatis Kompresi ke WebP)</label>
                 <input
                     type="file"
                     name="images[]"

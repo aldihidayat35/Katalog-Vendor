@@ -24,7 +24,6 @@
             slug: '{{ old('slug', $product->slug) }}',
             price: {{ old('price', $product->price) }},
             discountPrice: '{{ old('discount_price', $product->discount_price ?? '') }}',
-            dpPrice: {{ old('dp_price', $product->dp_price) }},
             tiers: {{ json_encode(old('tiers', $product->priceTiers->map(fn($t) => ['min_quantity' => $t->min_quantity, 'max_quantity' => $t->max_quantity, 'unit_price' => $t->unit_price])->toArray())) }},
             addTier() {
                 let lastTier = this.tiers.length > 0 ? this.tiers[this.tiers.length - 1] : null;
@@ -33,10 +32,6 @@
             },
             removeTier(index) {
                 this.tiers.splice(index, 1);
-            },
-            recalculateDp() {
-                let base = (this.discountPrice && parseInt(this.discountPrice) > 0) ? parseInt(this.discountPrice) : parseInt(this.price || 0);
-                this.dpPrice = Math.round(base * 0.5);
             },
             previews: [],
             handleFileSelect(event) {
@@ -235,27 +230,6 @@
                     @enderror
                 </div>
 
-                <!-- DP Price -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider">Harga DP per Pcs (Rp) <span class="text-rose-500">*</span></label>
-                        <button type="button" @click="recalculateDp()" class="text-[11px] text-champagne-700 hover:underline">
-                            Hitung 50%
-                        </button>
-                    </div>
-                    <input
-                        type="number"
-                        name="dp_price"
-                        x-model="dpPrice"
-                        value="{{ old('dp_price', $product->dp_price) }}"
-                        min="0"
-                        required
-                        class="w-full text-sm rounded-xl border-stone-300 focus:border-champagne-500 focus:ring-champagne-500"
-                    >
-                    @error('dp_price')
-                        <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
 
                 <!-- Min Order -->
                 <div>
@@ -478,7 +452,7 @@
 
             <!-- Additional Image Upload -->
             <div class="pt-4 border-t border-stone-100">
-                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Unggah Foto Tambahan (Maks 2 MB per file)</label>
+                <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">Unggah Foto Tambahan (Maks 10 MB per file &bull; Otomatis Kompresi ke WebP)</label>
                 <input
                     type="file"
                     name="images[]"

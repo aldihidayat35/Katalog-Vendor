@@ -36,7 +36,7 @@ class CategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($categoryId)],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ];
@@ -52,7 +52,7 @@ class CategoryRequest extends FormRequest
             'slug.required' => 'Slug kategori wajib diisi.',
             'slug.unique' => 'Slug kategori sudah digunakan.',
             'image.mimes' => 'Format gambar kategori harus JPG, JPEG, PNG, atau WEBP.',
-            'image.max' => 'Ukuran gambar maksimal 2 MB.',
+            'image.max' => 'Ukuran gambar maksimal 10 MB.',
             'sort_order.required' => 'Urutan kategori wajib diisi.',
             'sort_order.integer' => 'Urutan kategori harus berupa angka.',
         ];

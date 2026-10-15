@@ -88,7 +88,6 @@
                         </td>
                         <td class="px-6 py-4">
                             <span class="font-semibold text-charcoal-900 block">{{ rupiah($order->total_price) }}</span>
-                            <span class="text-[11px] uppercase font-semibold text-stone-500">{{ $order->payment_option }}</span>
                         </td>
                         <td class="px-6 py-4">
                             <x-admin.status-badge :status="$order->status" type="order" />

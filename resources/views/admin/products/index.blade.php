@@ -127,7 +127,7 @@
                     </div>
                 </td>
 
-                <!-- Price & DP -->
+                <!-- Price -->
                 <td class="px-6 py-4">
                     <div class="space-y-0.5">
                         <div class="font-semibold text-charcoal-900">
@@ -138,9 +138,6 @@
                                 {{ rupiah($product->price) }}
                             </div>
                         @endif
-                        <div class="text-xs text-champagne-700 font-medium">
-                            DP: {{ rupiah($product->dp_price) }}
-                        </div>
                     </div>
                 </td>
 

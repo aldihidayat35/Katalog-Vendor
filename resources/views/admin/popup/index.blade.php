@@ -136,7 +136,7 @@
                         class="block w-full text-sm text-stone-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-champagne-50 file:text-champagne-700 hover:file:bg-champagne-100 cursor-pointer border border-stone-200 rounded-xl bg-stone-50/50"
                     >
                     <p class="text-[11px] text-stone-400 mt-1.5">
-                        Mendukung format JPG, PNG, WEBP, atau SVG (maksimal 4 MB). Resolusi ideal: 600x800 px s/d 1080x1440 px.
+                        Mendukung format JPG, PNG, WEBP, atau SVG (maksimal 10 MB &bull; Otomatis WebP). Resolusi ideal: 600x800 px s/d 1080x1440 px.
                     </p>
 
                     <div class="mt-2.5 flex items-center gap-3">

@@ -26,7 +26,6 @@ class ProductFactory extends Factory
             'type' => 'printed',
             'price' => fake()->numberBetween(3000, 15000),
             'discount_price' => null,
-            'dp_price' => 150000,
             'min_order' => 100,
             'badge' => null,
             'stock_status' => 'ready',

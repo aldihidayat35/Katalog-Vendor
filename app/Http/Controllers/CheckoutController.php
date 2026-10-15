@@ -29,14 +29,8 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('warning', 'Keranjang belanja Anda masih kosong. Silakan pilih produk terlebih dahulu.');
         }
 
-        $paymentOption = $request->query('payment_option', session('checkout_payment_option', 'full'));
-        if (! in_array($paymentOption, ['dp', 'full'])) {
-            $paymentOption = 'full';
-        }
-        session(['checkout_payment_option' => $paymentOption]);
-
         $promoCode = session('applied_promo_code');
-        $summary = $this->cartService->getSummary($user, $paymentOption, $promoCode);
+        $summary = $this->cartService->getSummary($user, $promoCode);
 
         $rawShipping = setting('shipping_methods');
         $shippingMethods = is_string($rawShipping) ? json_decode($rawShipping, true) : (is_array($rawShipping) ? $rawShipping : []);
@@ -50,7 +44,7 @@ class CheckoutController extends Controller
             ];
         }
 
-        return view('checkout.index', compact('user', 'summary', 'shippingMethods', 'paymentOption'));
+        return view('checkout.index', compact('user', 'summary', 'shippingMethods'));
     }
 
     /**

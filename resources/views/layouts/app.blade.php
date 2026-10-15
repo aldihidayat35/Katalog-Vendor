@@ -6,26 +6,39 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @php
-        $siteName = setting('site_name', 'Undangin');
-        $siteTagline = setting('site_tagline', 'Spesialis Undangan Pernikahan');
-        $pageTitle = isset($title) && !empty($title) ? "{$title} - {$siteName}" : "{$siteName} - {$siteTagline}";
-        $pageDesc = $description ?? $siteTagline;
-        $pageUrl = url()->current();
-        $pageImage = $ogImage ?? asset('images/placeholder-product.svg');
+        $siteName = setting('site_name', 'Galeria Invitation');
+        $siteTagline = setting('site_tagline', 'Spesialis Undangan Pernikahan Mewah & Elegan');
+        $defaultDesc = setting('seo_meta_description', 'Vendor percetakan dan spesialis undangan pernikahan mewah, elegan, dan eksklusif. Menyediakan undangan cetak fisik berkualitas premium serta undangan digital interaktif untuk pengiriman ke seluruh Indonesia.');
+        $defaultKeywords = setting('seo_meta_keywords', 'undangan pernikahan, vendor undangan pernikahan, cetak undangan mewah, undangan elegan, undangan pernikahan eksklusif, undangan online, cetak undangan pernikahan indonesia');
+        $googleVerification = setting('google_site_verification');
+
+        $pageTitle = isset($title) && !empty($title) ? "{$title} - {$siteName}" : "{$siteName} — {$siteTagline}";
+        $pageDesc = $description ?? $defaultDesc;
+        $pageKeywords = $keywords ?? $defaultKeywords;
+        $pageUrl = $canonicalUrl ?? url()->current();
+        $pageImage = $ogImage ?? (setting('site_logo') ? site_logo_url() : asset('images/placeholder-product.svg'));
+        $pageType = $ogType ?? 'website';
     @endphp
 
     <title>{{ $pageTitle }}</title>
     <meta name="description" content="{{ $pageDesc }}">
+    <meta name="keywords" content="{{ $pageKeywords }}">
+    <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ $pageUrl }}">
     <link rel="icon" href="{{ site_favicon_url() }}">
 
+    @if (!empty($googleVerification))
+        <meta name="google-site-verification" content="{{ $googleVerification }}">
+    @endif
+
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="{{ $ogType ?? 'website' }}">
+    <meta property="og:type" content="{{ $pageType }}">
     <meta property="og:url" content="{{ $pageUrl }}">
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $pageDesc }}">
     <meta property="og:image" content="{{ $pageImage }}">
     <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:locale" content="id_ID">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -33,6 +46,33 @@
     <meta name="twitter:title" content="{{ $pageTitle }}">
     <meta name="twitter:description" content="{{ $pageDesc }}">
     <meta name="twitter:image" content="{{ $pageImage }}">
+
+    @php
+        $organizationSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => $siteName,
+            'url' => url('/'),
+            'logo' => site_logo_url(),
+            'description' => $defaultDesc,
+            'contactPoint' => [
+                '@type' => 'ContactPoint',
+                'telephone' => '+' . clean_phone_number(setting('whatsapp_number', '6281234567890')),
+                'contactType' => 'customer service',
+                'areaServed' => 'ID',
+                'availableLanguage' => ['Indonesian', 'English'],
+            ],
+        ];
+        if (setting('instagram_url')) {
+            $organizationSchema['sameAs'] = [setting('instagram_url')];
+        }
+    @endphp
+    <!-- Schema.org Organization (Global) -->
+    <script type="application/ld+json">
+    {!! json_encode($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+
+    @stack('schema')
 
     <!-- Fonts: DM Sans & Playfair Display (Matching Landing Page) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

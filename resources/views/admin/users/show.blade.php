@@ -145,7 +145,7 @@
                                         <x-admin.status-badge :status="$order->status" type="order" />
                                     </div>
                                     <p class="text-xs text-stone-500 mt-1">
-                                        {{ $order->created_at->translatedFormat('d F Y, H:i') }} &bull; Skema: {{ strtoupper($order->payment_option) }}
+                                        {{ $order->created_at->translatedFormat('d F Y, H:i') }}
                                     </p>
                                 </div>
 

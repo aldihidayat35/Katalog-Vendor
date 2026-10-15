@@ -30,8 +30,8 @@ class BannerRequest extends FormRequest
     public function rules(): array
     {
         $imageRule = $this->isMethod('post')
-            ? ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048']
-            : ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'];
+            ? ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240']
+            : ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'];
 
         return [
             'title' => ['required', 'string', 'max:255'],
@@ -52,7 +52,7 @@ class BannerRequest extends FormRequest
             'title.required' => 'Judul banner wajib diisi.',
             'image.required' => 'File gambar banner wajib diunggah.',
             'image.mimes' => 'Format gambar banner harus JPG, JPEG, PNG, atau WEBP.',
-            'image.max' => 'Ukuran gambar banner maksimal 2 MB.',
+            'image.max' => 'Ukuran gambar banner maksimal 10 MB.',
             'sort_order.required' => 'Urutan banner wajib diisi.',
             'sort_order.integer' => 'Urutan banner harus berupa angka.',
         ];

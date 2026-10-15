@@ -31,6 +31,9 @@ class SettingRequest extends FormRequest
             'site_favicon' => ['nullable', 'file', 'mimes:ico,png,jpg,jpeg,svg,webp', 'max:1024'],
             'remove_logo' => ['nullable', 'boolean'],
             'remove_favicon' => ['nullable', 'boolean'],
+            'google_site_verification' => ['nullable', 'string', 'max:255'],
+            'seo_meta_keywords' => ['nullable', 'string', 'max:500'],
+            'seo_meta_description' => ['nullable', 'string', 'max:500'],
         ];
     }
 

@@ -87,7 +87,6 @@ class Product extends Model
         'theme_color',
         'price',
         'discount_price',
-        'dp_price',
         'min_order',
         'badge',
         'stock_status',
@@ -100,7 +99,6 @@ class Product extends Model
         return [
             'price' => 'integer',
             'discount_price' => 'integer',
-            'dp_price' => 'integer',
             'min_order' => 'integer',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
@@ -191,22 +189,6 @@ class Product extends Model
     }
 
     /**
-     * Determine DP price based on quantity (50% of wholesale unit price if tiered).
-     */
-    public function getDpPriceForQuantity(int $quantity): int
-    {
-        $tier = $this->getTierForQuantity($quantity);
-
-        if ($tier) {
-            $dpPercentage = (float) setting('dp_percentage', 50);
-
-            return (int) round(($tier->unit_price * $dpPercentage) / 100);
-        }
-
-        return (int) $this->dp_price;
-    }
-
-    /**
      * Check if a quantity triggers a wholesale discount tier.
      */
     public function isWholesaleForQuantity(int $quantity): bool
@@ -246,28 +228,6 @@ class Product extends Model
         }
 
         return 0;
-    }
-
-    /**
-     * Accessor: dp_price
-     */
-    public function getDpPriceAttribute(): int
-    {
-        if (isset($this->attributes['dp_price']) && $this->attributes['dp_price'] > 0) {
-            return (int) $this->attributes['dp_price'];
-        }
-
-        $dpPercentage = (float) setting('dp_percentage', 50);
-
-        return (int) round(($this->final_price * $dpPercentage) / 100);
-    }
-
-    /**
-     * Accessor: dp_amount (alias for dp_price)
-     */
-    public function getDpAmountAttribute(): int
-    {
-        return $this->dp_price;
     }
 
     /**

@@ -35,7 +35,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'terracotta',
                 'price' => 3500,
                 'discount_price' => 2900,
-                'dp_price' => 150000,
                 'min_order' => 100,
                 'badge' => 'Efisien',
                 'stock_status' => 'ready',
@@ -52,7 +51,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'sage',
                 'price' => 3800,
                 'discount_price' => null,
-                'dp_price' => 150000,
                 'min_order' => 100,
                 'badge' => null,
                 'stock_status' => 'ready',
@@ -69,7 +67,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'dusty-blue',
                 'price' => 99000,
                 'discount_price' => 75000,
-                'dp_price' => 50000,
                 'min_order' => 1,
                 'badge' => 'Populer',
                 'stock_status' => 'ready',
@@ -88,7 +85,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'gold',
                 'price' => 6500,
                 'discount_price' => 5800,
-                'dp_price' => 300000,
                 'min_order' => 100,
                 'badge' => 'Favorit',
                 'stock_status' => 'ready',
@@ -105,7 +101,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'sage',
                 'price' => 7200,
                 'discount_price' => null,
-                'dp_price' => 350000,
                 'min_order' => 100,
                 'badge' => null,
                 'stock_status' => 'ready',
@@ -122,7 +117,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'rose-gold',
                 'price' => 180000,
                 'discount_price' => 149000,
-                'dp_price' => 80000,
                 'min_order' => 1,
                 'badge' => 'Best Seller',
                 'stock_status' => 'ready',
@@ -141,7 +135,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'burgundy',
                 'price' => 11500,
                 'discount_price' => 9900,
-                'dp_price' => 500000,
                 'min_order' => 100,
                 'badge' => 'Premium',
                 'stock_status' => 'ready',
@@ -158,7 +151,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'champagne',
                 'price' => 12800,
                 'discount_price' => null,
-                'dp_price' => 600000,
                 'min_order' => 100,
                 'badge' => 'Premium',
                 'stock_status' => 'ready',
@@ -175,7 +167,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'emerald',
                 'price' => 250000,
                 'discount_price' => 199000,
-                'dp_price' => 100000,
                 'min_order' => 1,
                 'badge' => 'Signature',
                 'stock_status' => 'ready',
@@ -194,7 +185,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'navy',
                 'price' => 24500,
                 'discount_price' => 22000,
-                'dp_price' => 1000000,
                 'min_order' => 100,
                 'badge' => 'Masterpiece',
                 'stock_status' => 'preorder',
@@ -211,7 +201,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'gold',
                 'price' => 29000,
                 'discount_price' => 26500,
-                'dp_price' => 1200000,
                 'min_order' => 100,
                 'badge' => 'Eksklusif',
                 'stock_status' => 'preorder',
@@ -228,7 +217,6 @@ class ProductSeeder extends Seeder
                 'theme_color' => 'monochrome',
                 'price' => 450000,
                 'discount_price' => 399000,
-                'dp_price' => 200000,
                 'min_order' => 1,
                 'badge' => 'VIP Suite',
                 'stock_status' => 'ready',
@@ -246,11 +234,6 @@ class ProductSeeder extends Seeder
             }
 
             $data['category_id'] = $category->id;
-
-            $unitFinalPrice = ! empty($data['discount_price']) ? (int) $data['discount_price'] : (int) $data['price'];
-            if (empty($data['dp_price']) || $data['dp_price'] > $unitFinalPrice) {
-                $data['dp_price'] = (int) round($unitFinalPrice * 0.5);
-            }
 
             $product = Product::updateOrCreate(
                 ['slug' => $data['slug']],

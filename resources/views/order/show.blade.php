@@ -56,17 +56,13 @@
         <div class="leading-relaxed">
             @if($order->status === 'lead')
                 <strong class="font-bold block mb-0.5">Status: Menunggu Koordinasi Admin</strong>
-                Pesanan Anda telah tercatat di sistem kami. Silakan hubungi admin via WhatsApp untuk konfirmasi {{ $order->is_dp ? 'pembayaran uang muka (DP 50%) sebesar ' . rupiah($order->dp_amount) : 'pembayaran lunas' }} dan konsultasi pengisian teks undangan.
+                Pesanan Anda telah tercatat di sistem kami. Silakan hubungi admin via WhatsApp untuk konfirmasi pesanan, negosiasi skema DP / pelunasan, serta konsultasi data teks undangan.
             @elseif($order->status === 'contacted')
                 <strong class="font-bold block mb-0.5">Status: Sedang Dalam Koordinasi</strong>
                 Admin kami telah menghubungi Anda atau sedang menyiapkan sampel/draf data undangan Anda.
             @elseif($order->status === 'confirmed')
-                <strong class="font-bold block mb-0.5">Status: {{ $order->is_dp ? 'DP Diterima & Masuk Antrian Produksi' : 'Pembayaran Terverifikasi & Dalam Produksi' }}</strong>
-                @if($order->is_dp)
-                    Pembayaran DP 50% sebesar <strong>{{ rupiah($order->dp_amount) }}</strong> telah dikonfirmasi! Pesanan Anda saat ini sedang dikerjakan. Sisa pelunasan sebesar <strong>{{ rupiah($order->remaining_balance) }}</strong> akan ditagihkan saat pesanan selesai dan siap dikirim.
-                @else
-                    Pembayaran pesanan telah dikonfirmasi dan lunas. Pesanan Anda sedang diproses oleh tim percetakan.
-                @endif
+                <strong class="font-bold block mb-0.5">Status: Dikonfirmasi &amp; Masuk Produksi</strong>
+                Pesanan Anda telah dikonfirmasi dan sedang diproses oleh tim produksi sesuai kesepakatan di WhatsApp.
             @elseif($order->status === 'completed')
                 <strong class="font-bold block mb-0.5">Status: Pesanan Selesai</strong>
                 Pesanan Anda telah selesai diproduksi dan dikirimkan atau diserahkan sesuai metode pengiriman yang dipilih. Terima kasih atas kepercayaan Anda!
@@ -167,29 +163,13 @@
                 </div>
             @endif
 
-            @if($order->is_dp)
-                <div class="p-3.5 rounded-xl bg-champagne-100/60 border border-champagne-200/90 space-y-1.5 my-2">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-medium text-charcoal-800">Uang Muka (DP 50%):</span>
-                        <span class="font-bold text-champagne-800">{{ rupiah($order->dp_amount) }}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs text-stone-600">
-                        <span>Sisa Tagihan Pelunasan:</span>
-                        <span class="font-semibold text-stone-700">{{ rupiah($order->remaining_balance) }}</span>
-                    </div>
-                    <p class="text-[10px] text-stone-500 pt-1 leading-snug">
-                        💡 Dilunasi saat pengerjaan undangan selesai sebelum proses kirim.
-                    </p>
-                </div>
-            @endif
-
             <div class="flex justify-between items-baseline pt-2 border-t border-stone-200">
                 <div>
                     <span class="font-serif font-bold text-base text-charcoal-900 block">
-                        {{ $order->is_dp ? 'Total Tagihan DP Sekarang:' : 'Total Nilai Tagihan:' }}
+                        Total Pesanan:
                     </span>
-                    <span class="text-[10px] text-champagne-700 font-medium">
-                        Skema: {{ $order->payment_label }}
+                    <span class="text-[10px] text-stone-500 font-medium">
+                        Opsi DP &amp; pelunasan dibicarakan via WhatsApp
                     </span>
                 </div>
                 <span class="font-serif font-bold text-xl text-champagne-700">

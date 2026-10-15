@@ -1,18 +1,87 @@
-<x-app-layout>
-    <x-slot:title>Katalog Undangan Pernikahan</x-slot:title>
+@php
+    $currentCategoryModel = $selectedCategory ? $categories->firstWhere('slug', $selectedCategory) : null;
+    $catalogTitle = $currentCategoryModel 
+        ? "Koleksi Undangan {$currentCategoryModel->name}" 
+        : ($searchQuery ? "Pencarian: {$searchQuery}" : 'Katalog Undangan Pernikahan Mewah & Elegan');
+    $catalogDesc = $currentCategoryModel && $currentCategoryModel->description
+        ? Str::limit(strip_tags($currentCategoryModel->description), 160)
+        : 'Jelajahi koleksi lengkap undangan pernikahan mewah, cetak amplop, foil gold, vellum, dan undangan web digital. Pengiriman aman ke seluruh Indonesia.';
+    $catalogKeywords = $currentCategoryModel 
+        ? "undangan {$currentCategoryModel->name}, paket undangan {$currentCategoryModel->name}, cetak undangan {$currentCategoryModel->slug}, katalog undangan"
+        : 'katalog undangan pernikahan, cetak undangan pernikahan, vendor undangan indonesia, undangan pernikahan mewah, cetak undangan online';
+    $catalogCanonical = $selectedCategory ? route('catalog.index', ['kategori' => $selectedCategory]) : route('catalog.index');
+
+    $catalogBreadcrumbs = [
+        [
+            '@type' => 'ListItem',
+            'position' => 1,
+            'name' => 'Beranda',
+            'item' => route('home'),
+        ],
+        [
+            '@type' => 'ListItem',
+            'position' => 2,
+            'name' => 'Katalog',
+            'item' => route('catalog.index'),
+        ],
+    ];
+    if ($currentCategoryModel) {
+        $catalogBreadcrumbs[] = [
+            '@type' => 'ListItem',
+            'position' => 3,
+            'name' => $currentCategoryModel->name,
+            'item' => route('catalog.index', ['kategori' => $currentCategoryModel->slug]),
+        ];
+    }
+    $catalogBreadcrumbSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => $catalogBreadcrumbs,
+    ];
+@endphp
+
+<x-app-layout 
+    :title="$catalogTitle"
+    :description="$catalogDesc"
+    :keywords="$catalogKeywords"
+    :canonicalUrl="$catalogCanonical"
+>
+    <!-- Schema.org BreadcrumbList -->
+    @push('schema')
+    <script type="application/ld+json">
+    {!! json_encode($catalogBreadcrumbSchema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    @endpush
+
+    <!-- Breadcrumb Nav Bar -->
+    <div class="bg-ivory-200 border-b border-champagne-200/60 py-3">
+        <div class="max-w-[1224px] w-[calc(100%-32px)] sm:w-[calc(100%-56px)] mx-auto">
+            <nav class="flex items-center text-xs font-medium text-stone-500 overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
+                <a href="{{ route('home') }}" class="hover:text-champagne-700 transition-colors">Beranda</a>
+                <span class="mx-2 text-stone-400">/</span>
+                @if($currentCategoryModel)
+                    <a href="{{ route('catalog.index') }}" class="hover:text-champagne-700 transition-colors">Katalog</a>
+                    <span class="mx-2 text-stone-400">/</span>
+                    <span class="text-charcoal-900 font-semibold truncate">{{ $currentCategoryModel->name }}</span>
+                @else
+                    <span class="text-charcoal-900 font-semibold truncate">Katalog Undangan</span>
+                @endif
+            </nav>
+        </div>
+    </div>
 
     <!-- Page Banner Header Matching Landing Page Look -->
     <div class="pt-4 sm:pt-6">
         <div class="max-w-[1224px] w-[calc(100%-32px)] sm:w-[calc(100%-56px)] mx-auto rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-[#ece8e2]" style="background: radial-gradient(ellipse at 50% 30%, #3a281c 0%, #1e1510 100%);">
             <div class="py-10 sm:py-14 px-4 sm:px-8 text-center text-white">
                 <span class="text-xs uppercase font-bold tracking-widest text-[#d89f66] mb-2 inline-block bg-white/10 px-3 py-1 rounded-full border border-white/10">
-                    ✦ KOLEKSI LENGKAP
+                    ✦ {{ $currentCategoryModel ? strtoupper($currentCategoryModel->name) : 'KOLEKSI LENGKAP' }}
                 </span>
                 <h1 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white tracking-tight">
-                    Katalog Undangan Eksklusif
+                    {{ $catalogTitle }}
                 </h1>
                 <p class="text-stone-300 text-xs sm:text-sm max-w-2xl mx-auto mt-3 leading-relaxed">
-                    Temukan beragam pilihan desain cetak fisik mewah dan undangan website digital modern berkualitas tinggi.
+                    {{ $catalogDesc }}
                 </p>
             </div>
         </div>

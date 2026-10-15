@@ -51,7 +51,6 @@ class WholesalePricingTest extends TestCase
             'type' => 'printed',
             'price' => 1200,
             'discount_price' => null,
-            'dp_price' => 600,
             'min_order' => 50,
             'stock_status' => 'ready',
             'description' => 'Deskripsi paket lengkap undangan rustic',
@@ -127,15 +126,13 @@ class WholesalePricingTest extends TestCase
 
         // 150 pcs should match tier 2 (800)
         $this->assertEquals(800, $product->getUnitPriceForQuantity(150));
-        $this->assertEquals(400, $product->getDpPriceForQuantity(150));
         $this->assertTrue($product->isWholesaleForQuantity(150));
 
         // 500 pcs exceeds 300 but should fall back to best tier (700)
         $this->assertEquals(700, $product->getUnitPriceForQuantity(500));
-        $this->assertEquals(350, $product->getDpPriceForQuantity(500));
     }
 
-    public function test_cart_service_calculates_wholesale_pricing_and_dp(): void
+    public function test_cart_service_calculates_wholesale_pricing(): void
     {
         $product = Product::factory()->create([
             'category_id' => $this->category->id,
@@ -165,16 +162,13 @@ class WholesalePricingTest extends TestCase
         // Add 150 pcs (tier 2: 800/pcs)
         $cartService->add($this->customer, $product->id, 150);
 
-        $summary = $cartService->getSummary($this->customer, 'dp');
+        $summary = $cartService->getSummary($this->customer);
         $item = $summary['items']->first();
 
         $this->assertEquals(800, $item->unit_price);
         $this->assertTrue($item->is_wholesale);
         $this->assertEquals(120000, $item->subtotal); // 150 * 800
-        $this->assertEquals(400, $item->unit_dp); // 50% of 800
-        $this->assertEquals(60000, $item->dp_subtotal); // 150 * 400
-        $this->assertEquals(60000, $summary['total']);
-        $this->assertEquals(60000, $summary['remaining_balance']);
+        $this->assertEquals(120000, $summary['total']);
     }
 
     public function test_checkout_saves_wholesale_pricing_and_generates_whatsapp_with_wholesale_tags(): void
@@ -208,21 +202,20 @@ class WholesalePricingTest extends TestCase
             'customer_phone' => '081234567890',
             'shipping_address' => 'Jl. Merdeka No. 45, Jakarta',
             'shipping_method' => 'JNE Reguler',
-            'payment_option' => 'dp',
             'event_date' => now()->addDays(30)->toDateString(),
         ]);
 
         $this->assertInstanceOf(Order::class, $order);
         $this->assertEquals(120000, $order->subtotal);
-        $this->assertEquals(60000, $order->total_price);
+        $this->assertEquals(120000, $order->total_price);
 
         $item = $order->items->first();
         $this->assertEquals(800, $item->unit_price);
-        $this->assertEquals(400, $item->dp_price);
         $this->assertTrue($item->isWholesale());
 
         // WhatsApp message must contain wholesale indicators
         $this->assertStringContainsString('[Grosir]', $order->whatsapp_message);
         $this->assertStringContainsString('(Harga Grosir)', $order->whatsapp_message);
+        $this->assertStringContainsString('Total Pesanan: Rp 120.000', $order->whatsapp_message);
     }
 }

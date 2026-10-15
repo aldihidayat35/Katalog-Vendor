@@ -1,5 +1,6 @@
 {!! '<' . '?xml version="1.0" encoding="UTF-8"?' . '>' !!}
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
     <!-- Halaman Utama & Statis -->
     <url>
         <loc>{{ url('/') }}</loc>
@@ -29,6 +30,12 @@
             <lastmod>{{ $cat->updated_at->toAtomString() }}</lastmod>
             <changefreq>weekly</changefreq>
             <priority>0.8</priority>
+            @if ($cat->image_url)
+                <image:image>
+                    <image:loc>{{ $cat->image_url }}</image:loc>
+                    <image:title>{{ $cat->name }}</image:title>
+                </image:image>
+            @endif
         </url>
     @endforeach
 
@@ -39,6 +46,12 @@
             <lastmod>{{ $product->updated_at->toAtomString() }}</lastmod>
             <changefreq>weekly</changefreq>
             <priority>0.8</priority>
+            @if ($product->primary_image_url)
+                <image:image>
+                    <image:loc>{{ $product->primary_image_url }}</image:loc>
+                    <image:title>{{ $product->name }}</image:title>
+                </image:image>
+            @endif
         </url>
     @endforeach
 </urlset>

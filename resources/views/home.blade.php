@@ -5,9 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f0efee">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="{{ setting('site_tagline', 'Katalog Undangan Cetak & Digital Eksklusif - Temukan berbagai pilihan undangan pernikahan & acara berkualitas tinggi.') }}">
-    <title>{{ setting('site_name', 'Undangin') }} — {{ setting('site_tagline', 'Katalog Undangan Cetak & Digital Eksklusif') }}</title>
+    @php
+        $siteName = setting('site_name', 'Galeria Invitation');
+        $siteTagline = setting('site_tagline', 'Spesialis Undangan Pernikahan Mewah & Elegan');
+        $defaultDesc = setting('seo_meta_description', 'Vendor percetakan dan spesialis undangan pernikahan mewah, elegan, dan eksklusif. Menyediakan undangan cetak fisik berkualitas premium serta undangan digital interaktif untuk pengiriman ke seluruh Indonesia.');
+        $defaultKeywords = setting('seo_meta_keywords', 'undangan pernikahan, vendor undangan pernikahan, cetak undangan mewah, undangan elegan, undangan pernikahan eksklusif, undangan online, cetak undangan pernikahan indonesia');
+        $googleVerification = setting('google_site_verification');
+        $homeUrl = url('/');
+        $ogImage = setting('site_logo') ? site_logo_url() : asset('images/placeholder-product.svg');
+    @endphp
+
+    <title>{{ $siteName }} — {{ $siteTagline }}</title>
+    <meta name="description" content="{{ $defaultDesc }}">
+    <meta name="keywords" content="{{ $defaultKeywords }}">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ $homeUrl }}">
     <link rel="icon" href="{{ site_favicon_url() }}">
+
+    @if (!empty($googleVerification))
+        <meta name="google-site-verification" content="{{ $googleVerification }}">
+    @endif
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $homeUrl }}">
+    <meta property="og:title" content="{{ $siteName }} — {{ $siteTagline }}">
+    <meta property="og:description" content="{{ $defaultDesc }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:locale" content="id_ID">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $homeUrl }}">
+    <meta name="twitter:title" content="{{ $siteName }} — {{ $siteTagline }}">
+    <meta name="twitter:description" content="{{ $defaultDesc }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
+    @php
+        $websiteSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => $siteName,
+            'url' => $homeUrl,
+            'description' => $defaultDesc,
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => url('/katalog') . '?q={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ];
+
+        $homeOrgSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => $siteName,
+            'url' => $homeUrl,
+            'logo' => site_logo_url(),
+            'description' => $defaultDesc,
+            'contactPoint' => [
+                '@type' => 'ContactPoint',
+                'telephone' => '+' . clean_phone_number(setting('whatsapp_number', '6281234567890')),
+                'contactType' => 'customer service',
+                'areaServed' => 'ID',
+                'availableLanguage' => ['Indonesian', 'English'],
+            ],
+        ];
+        if (setting('instagram_url')) {
+            $homeOrgSchema['sameAs'] = [setting('instagram_url')];
+        }
+    @endphp
+
+    <!-- Schema.org WebSite & Sitelinks SearchBox -->
+    <script type="application/ld+json">
+    {!! json_encode($websiteSchema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+
+    <!-- Schema.org Organization -->
+    <script type="application/ld+json">
+    {!! json_encode($homeOrgSchema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

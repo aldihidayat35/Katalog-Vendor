@@ -140,7 +140,6 @@ class AdminPanelTest extends TestCase
             'specifications' => 'Bahan Jasmine 260gr, hotprint gold',
             'price' => 15000,
             'discount_price' => 12000,
-            'dp_price' => 6000,
             'min_order' => 100,
             'badge' => 'BEST SELLER',
             'stock_status' => 'ready',
@@ -160,7 +159,6 @@ class AdminPanelTest extends TestCase
             'slug' => 'royal-gold-floral-luxury',
             'price' => 15000,
             'discount_price' => 12000,
-            'dp_price' => 6000,
         ]);
 
         $product = Product::where('slug', 'royal-gold-floral-luxury')->first();
@@ -171,7 +169,7 @@ class AdminPanelTest extends TestCase
         $this->assertTrue($product->images->first()->is_primary);
     }
 
-    public function test_product_validation_rejects_invalid_discount_and_dp_prices(): void
+    public function test_product_validation_rejects_invalid_discount_prices(): void
     {
         $category = Category::factory()->create();
 
@@ -184,26 +182,10 @@ class AdminPanelTest extends TestCase
             'description' => 'Deskripsi',
             'price' => 10000,
             'discount_price' => 12000, // Invalid: discount price is higher than price
-            'dp_price' => 5000,
             'min_order' => 100,
             'stock_status' => 'ready',
         ]);
         $response1->assertSessionHasErrors('discount_price');
-
-        // dp_price > final_price
-        $response2 = $this->actingAs($this->admin)->post(route('admin.products.store'), [
-            'category_id' => $category->id,
-            'name' => 'Produk B',
-            'slug' => 'produk-b',
-            'type' => 'printed',
-            'description' => 'Deskripsi',
-            'price' => 10000,
-            'discount_price' => 8000,
-            'dp_price' => 9000, // Invalid: dp is 9000 but final price is 8000
-            'min_order' => 100,
-            'stock_status' => 'ready',
-        ]);
-        $response2->assertSessionHasErrors('dp_price');
     }
 
     public function test_admin_can_update_product_and_delete_single_image(): void
@@ -305,7 +287,6 @@ class AdminPanelTest extends TestCase
             'customer_phone' => '081234567890',
             'shipping_address' => 'Jl. Mawar No. 10 Jakarta',
             'shipping_method' => 'JNE Reguler',
-            'payment_option' => 'dp',
             'subtotal' => 1500000,
             'discount_total' => 0,
             'total_price' => 750000,
@@ -337,7 +318,6 @@ class AdminPanelTest extends TestCase
             'customer_phone' => '081299998888',
             'shipping_address' => 'Surabaya',
             'shipping_method' => 'J&T',
-            'payment_option' => 'full',
             'subtotal' => 2000000,
             'discount_total' => 100000,
             'total_price' => 1900000,
@@ -354,11 +334,10 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('No. Pesanan', $content);
         $this->assertStringContainsString('INV-20261010-0001', $content);
         $this->assertStringContainsString('Siti Nurhaliza', $content);
-        $this->assertStringContainsString('Total Dibayar/DP', $content);
-        $this->assertStringContainsString('Sisa Pelunasan', $content);
+        $this->assertStringContainsString('Total Pesanan', $content);
     }
 
-    public function test_admin_order_detail_displays_item_unit_price_and_dp_breakdown(): void
+    public function test_admin_order_detail_displays_item_unit_price_and_order_total(): void
     {
         $order = Order::create([
             'order_number' => 'INV-20261010-0088',
@@ -368,10 +347,9 @@ class AdminPanelTest extends TestCase
             'customer_phone' => '081234567888',
             'shipping_address' => 'Jl. Anggrek No. 12',
             'shipping_method' => 'JNE Reguler',
-            'payment_option' => 'dp',
             'subtotal' => 1000000,
             'discount_total' => 0,
-            'total_price' => 500000,
+            'total_price' => 1000000,
             'status' => 'confirmed',
             'whatsapp_message' => 'Halo...',
         ]);
@@ -379,7 +357,6 @@ class AdminPanelTest extends TestCase
         $order->items()->create([
             'product_name' => 'Kirana Botanical Single Card',
             'unit_price' => 10000,
-            'dp_price' => 5000,
             'quantity' => 100,
             'subtotal' => 1000000,
         ]);
@@ -388,9 +365,8 @@ class AdminPanelTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Harga Satuan: Rp 10.000');
-        $response->assertSee('Uang Muka (DP 50%):');
-        $response->assertSee('Rp 500.000');
-        $response->assertSee('Sisa Tagihan Pelunasan:');
+        $response->assertSee('Total Nilai Pesanan');
+        $response->assertSee('Rp 1.000.000');
     }
 
     /**
@@ -513,7 +489,6 @@ class AdminPanelTest extends TestCase
             'description' => 'Deskripsi produk',
             'specifications' => 'Bahan Velvet tebal 260 gsm',
             'price' => 20000,
-            'dp_price' => 10000,
             'min_order' => 50,
             'stock_status' => 'ready',
         ];
